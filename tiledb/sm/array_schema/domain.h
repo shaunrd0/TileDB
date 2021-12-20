@@ -35,9 +35,9 @@
 
 #include "tiledb/common/macros.h"
 #include "tiledb/common/status.h"
+#include "tiledb/common/types/untyped_datum.h"
 #include "tiledb/sm/misc/types.h"
 #include "tiledb/sm/query/query_buffer.h"
-#include "tiledb/sm/query/result_coords.h"
 
 #include <vector>
 
@@ -124,7 +124,6 @@ class Domain {
    * of a regular tile grid, this function assumes that the cells are in the
    * same regular tile.
    *
-   * @tparam T The coordinates type.
    * @param dim_idx The dimension to compare the coordinates on.
    * @param a The first input coordinates.
    * @param b The second input coordinates.
@@ -134,7 +133,7 @@ class Domain {
    *    - +1 if the first coordinate succeeds the second
    */
   int cell_order_cmp(
-      unsigned dim_idx, const ResultCoords& a, const ResultCoords& b) const;
+      unsigned dim_idx, const UntypedDatumView a, const UntypedDatumView b) const;
 
   /**
    * Checks the cell order of the input coordinates. Since the coordinates

@@ -47,13 +47,30 @@ using namespace tiledb::common;
 namespace tiledb {
 namespace sm {
 
+class CellCmpBase {
+ protected:
+  /** The domain. */
+  const Domain* domain_;
+  /** The number of dimensions. */
+  unsigned dim_num_;
+ public:
+  explicit CellCmpBase(const Domain* domain)
+      : domain_(domain), dim_num_(domain->dim_num()) {}
+
+  int cell_order_cmp(unsigned int d, const ResultCoords& a, const ResultCoords& b) const {
+    const auto& dim{*(domain_->dimension(d))};
+    auto v1{a.dimension_datum_untyped(dim,d)};
+    auto v2{b.dimension_datum_untyped(dim,d)};
+    return domain_->cell_order_cmp(d, v1, v2);
+  }
+};
+
 /** Wrapper of comparison function for sorting coords on row-major order. */
-class RowCmp {
+class RowCmp : CellCmpBase {
  public:
   /** Constructor. */
   RowCmp(const Domain* domain)
-      : domain_(domain)
-      , dim_num_(domain->dim_num()) {
+      : CellCmpBase(domain) {
   }
 
   /**
@@ -65,7 +82,7 @@ class RowCmp {
    */
   bool operator()(const ResultCoords& a, const ResultCoords& b) const {
     for (unsigned int d = 0; d < dim_num_; ++d) {
-      auto res = domain_->cell_order_cmp(d, a, b);
+      auto res = cell_order_cmp(d, a, b);
 
       if (res == -1)
         return true;
@@ -76,21 +93,14 @@ class RowCmp {
 
     return false;
   }
-
- private:
-  /** The domain. */
-  const Domain* domain_;
-  /** The number of dimensions. */
-  unsigned dim_num_;
 };
 
 /** Wrapper of comparison function for sorting coords on col-major order. */
-class ColCmp {
+class ColCmp : CellCmpBase {
  public:
   /** Constructor. */
   ColCmp(const Domain* domain)
-      : domain_(domain)
-      , dim_num_(domain->dim_num()) {
+      : CellCmpBase(domain) {
   }
 
   /**
@@ -102,7 +112,7 @@ class ColCmp {
    */
   bool operator()(const ResultCoords& a, const ResultCoords& b) const {
     for (unsigned int d = dim_num_ - 1;; --d) {
-      auto res = domain_->cell_order_cmp(d, a, b);
+      auto res = cell_order_cmp(d, a, b);
 
       if (res == -1)
         return true;
@@ -116,43 +126,34 @@ class ColCmp {
 
     return false;
   }
-
- private:
-  /** The domain. */
-  const Domain* domain_;
-  /** The number of dimensions. */
-  unsigned dim_num_;
 };
 
 /** Wrapper of comparison function for sorting coords on Hilbert values. */
-class HilbertCmp {
+class HilbertCmp : CellCmpBase{
  public:
   /** Constructor. */
   HilbertCmp(
       const Domain* domain,
       const std::vector<const QueryBuffer*>* buffs,
       const std::vector<uint64_t>* hilbert_values)
-      : buffs_(buffs)
-      , domain_(domain)
+      : CellCmpBase(domain)
+      , buffs_(buffs)
       , hilbert_values_(hilbert_values) {
-    dim_num_ = domain->dim_num();
   }
 
   /** Constructor. */
   HilbertCmp(
       const Domain* domain, std::vector<ResultCoords>::iterator iter_begin)
-      : domain_(domain)
+      : CellCmpBase(domain)
       , iter_begin_(iter_begin) {
-    dim_num_ = domain->dim_num();
   }
 
   /** Constructor. */
   HilbertCmp(
       const Domain* domain,
       std::vector<std::vector<uint64_t>>* fragments_hilbert_values)
-      : domain_(domain)
+      : CellCmpBase(domain)
       , fragment_hilbert_values_(fragments_hilbert_values) {
-    dim_num_ = domain->dim_num();
   }
 
   /**
@@ -198,7 +199,7 @@ class HilbertCmp {
     const auto& a_coord = *(iter_begin_ + a.second);
     const auto& b_coord = *(iter_begin_ + b.second);
     for (unsigned d = 0; d < dim_num_; ++d) {
-      auto res = domain_->cell_order_cmp(d, a_coord, b_coord);
+      auto res = cell_order_cmp(d, a_coord, b_coord);
       if (res == -1)
         return true;
       if (res == 1)
@@ -227,7 +228,7 @@ class HilbertCmp {
 
     // Compare cell order on row-major to break the tie
     for (unsigned d = 0; d < dim_num_; ++d) {
-      auto res = domain_->cell_order_cmp(d, a, b);
+      auto res = cell_order_cmp(d, a, b);
       if (res == -1)
         return true;
       if (res == 1)
@@ -254,10 +255,6 @@ class HilbertCmp {
    * dimensions are defined in the array schema.
    */
   const std::vector<const QueryBuffer*>* buffs_;
-  /** The array domain. */
-  const Domain* domain_;
-  /** The number of dimensions. */
-  unsigned dim_num_;
   /** Start iterator of result coords vector. */
   std::vector<ResultCoords>::iterator iter_begin_;
   /** The Hilbert values vector. */
@@ -316,7 +313,7 @@ class HilbertCmpReverse {
  * Wrapper of comparison function for sorting coords on the global order
  * of some domain.
  */
-class GlobalCmp {
+class GlobalCmp : CellCmpBase {
  public:
   /**
    * Constructor.
@@ -326,8 +323,7 @@ class GlobalCmp {
    *     in positional comparisons.
    */
   GlobalCmp(const Domain* domain)
-      : domain_(domain) {
-    dim_num_ = domain->dim_num();
+      : CellCmpBase(domain) {
     tile_order_ = domain->tile_order();
     cell_order_ = domain->cell_order();
     buffs_ = nullptr;
@@ -340,7 +336,7 @@ class GlobalCmp {
    * @param buffs The coordinate query buffers, one per dimension.
    */
   GlobalCmp(const Domain* domain, const std::vector<const QueryBuffer*>* buffs)
-      : domain_(domain)
+      : CellCmpBase(domain)
       , buffs_(buffs) {
   }
 
@@ -389,7 +385,7 @@ class GlobalCmp {
     // Compare cell order
     if (cell_order_ == Layout::ROW_MAJOR) {
       for (unsigned d = 0; d < dim_num_; ++d) {
-        auto res = domain_->cell_order_cmp(d, a, b);
+        auto res = cell_order_cmp(d, a, b);
 
         if (res == -1)
           return true;
@@ -400,7 +396,7 @@ class GlobalCmp {
     } else {  // COL_MAJOR
       assert(cell_order_ == Layout::COL_MAJOR);
       for (unsigned d = dim_num_ - 1;; --d) {
-        auto res = domain_->cell_order_cmp(d, a, b);
+        auto res = cell_order_cmp(d, a, b);
 
         if (res == -1)
           return true;
@@ -440,10 +436,6 @@ class GlobalCmp {
   }
 
  private:
-  /** The domain. */
-  const Domain* domain_;
-  /** The number of dimensions. */
-  unsigned dim_num_;
   /** The tile order. */
   Layout tile_order_;
   /** The cell order. */

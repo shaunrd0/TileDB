@@ -114,17 +114,19 @@ struct ResultCoords {
     return tile_->coord(pos_, dim_idx);
   }
 
-  inline DynamicTypedDatumView dimension_datum(
+  inline UntypedDatumView dimension_datum_untyped(
       const Dimension& dim, unsigned dim_idx) const {
-    auto type = dim.type();
     if (dim.var_size()) {
       auto x{tile_->coord_string(pos_, dim_idx)};
-      return tdb::DynamicTypedDatumView{UntypedDatumView{x.data(), x.size()},
-                                        type};
+      return tdb::UntypedDatumView{x.data(), x.size()};
     } else {
-      return tdb::DynamicTypedDatumView{
-          UntypedDatumView{coord(dim_idx), dim.coord_size()}, type};
+      return tdb::UntypedDatumView{coord(dim_idx), dim.coord_size()};
     }
+  }
+
+  inline DynamicTypedDatumView dimension_datum(
+      const Dimension& dim, unsigned dim_idx) const {
+    return tdb::DynamicTypedDatumView{ dimension_datum_untyped(dim,dim_idx),dim.type()};
   }
 
   /**
