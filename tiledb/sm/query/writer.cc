@@ -30,13 +30,15 @@
  * This file implements class Writer.
  */
 
-#include "tiledb/sm/query/writer.h"
+#include "writer.h"
+#include "domain_buffer.h"
+#include "hilbert_order.h"
+#include "query_macros.h"
 #include "tiledb/common/common.h"
 #include "tiledb/common/heap_memory.h"
 #include "tiledb/common/logger.h"
 #include "tiledb/sm/array/array.h"
 #include "tiledb/sm/array_schema/array_schema.h"
-#include "tiledb/sm/array_schema/dimension.h"
 #include "tiledb/sm/filesystem/vfs.h"
 #include "tiledb/sm/fragment/fragment_metadata.h"
 #include "tiledb/sm/misc/comparators.h"
@@ -46,8 +48,6 @@
 #include "tiledb/sm/misc/time.h"
 #include "tiledb/sm/misc/utils.h"
 #include "tiledb/sm/misc/uuid.h"
-#include "tiledb/sm/query/hilbert_order.h"
-#include "tiledb/sm/query/query_macros.h"
 #include "tiledb/sm/stats/global_stats.h"
 #include "tiledb/sm/storage_manager/storage_manager.h"
 #include "tiledb/sm/tile/generic_tile_io.h"
@@ -618,25 +618,19 @@ Status Writer::check_global_order() const {
   if (array_schema_->cell_order() == Layout::HILBERT)
     return check_global_order_hilbert();
 
-  // Prepare auxiliary vector for better performance
-  auto dim_num = array_schema_->dim_num();
-  std::vector<const QueryBuffer*> buffs(dim_num);
-  for (unsigned d = 0; d < dim_num; ++d) {
-    const auto& dim_name = array_schema_->dimension(d)->name();
-    buffs[d] = &(buffers_.find(dim_name)->second);
-  }
-
   // Check if all coordinates fall in the domain in parallel
-  auto domain = array_schema_->domain();
+  const Domain& domain{*array_schema_->domain()};
+  DomainBuffersView domain_buffs{*array_schema_, buffers_};
   auto status = parallel_for(
       storage_manager_->compute_tp(),
       0,
       coords_info_.coords_num_ - 1,
       [&](uint64_t i) {
-        auto tile_cmp = domain->tile_order_cmp(buffs, i, i + 1);
-        auto fail =
-            (tile_cmp > 0) ||
-            ((tile_cmp == 0) && domain->cell_order_cmp(buffs, i, i + 1) > 0);
+        auto left{domain_buffs.domain_data_at(domain, i)};
+        auto right{domain_buffs.domain_data_at(domain, i + 1)};
+        auto tile_cmp = domain.tile_order_cmp(left, right);
+        auto fail = (tile_cmp > 0) ||
+                    ((tile_cmp == 0) && domain.cell_order_cmp(left, right) > 0);
 
         if (fail) {
           std::stringstream ss;
@@ -657,16 +651,11 @@ Status Writer::check_global_order() const {
 
 Status Writer::check_global_order_hilbert() const {
   // Prepare auxiliary vector for better performance
-  auto dim_num = array_schema_->dim_num();
-  std::vector<const QueryBuffer*> buffs(dim_num);
-  for (unsigned d = 0; d < dim_num; ++d) {
-    const auto& dim_name = array_schema_->dimension(d)->name();
-    buffs[d] = &buffers_.at(dim_name);
-  }
+  DomainBuffersView domain_buffs{*array_schema_, buffers_};
 
   // Compute hilbert values
   std::vector<uint64_t> hilbert_values(coords_info_.coords_num_);
-  RETURN_NOT_OK(calculate_hilbert_values(buffs, &hilbert_values));
+  RETURN_NOT_OK(calculate_hilbert_values(domain_buffs, hilbert_values));
 
   // Check if all coordinates fall in the domain in parallel
   auto status = parallel_for(
@@ -2470,41 +2459,32 @@ void Writer::reset() {
   initialized_ = false;
 }
 
-Status Writer::sort_coords(std::vector<uint64_t>* cell_pos) const {
+Status Writer::sort_coords(std::vector<uint64_t>& cell_pos) const {
   auto timer_se = stats_->start_timer("sort_coords");
 
-  // For easy reference
-  auto domain = array_schema_->domain();
-  auto cell_order = array_schema_->cell_order();
-
-  // Prepare auxiliary vector for better performance
-  auto dim_num = array_schema_->dim_num();
-  std::vector<const QueryBuffer*> buffs(dim_num);
-  for (unsigned d = 0; d < dim_num; ++d) {
-    const auto& dim_name = array_schema_->dimension(d)->name();
-    buffs[d] = &(buffers_.find(dim_name)->second);
-  }
-
   // Populate cell_pos
-  cell_pos->resize(coords_info_.coords_num_);
+  cell_pos.resize(coords_info_.coords_num_);
   for (uint64_t i = 0; i < coords_info_.coords_num_; ++i)
-    (*cell_pos)[i] = i;
+    cell_pos[i] = i;
 
   // Sort the coordinates in global order
+  auto cell_order = array_schema_->cell_order();
+  const Domain& domain = *array_schema_->domain();
+  DomainBuffersView domain_buffs{*array_schema_, buffers_};
   if (cell_order != Layout::HILBERT) {  // Row- or col-major
     parallel_sort(
         storage_manager_->compute_tp(),
-        cell_pos->begin(),
-        cell_pos->end(),
-        GlobalCmp(domain, &buffs));
+        cell_pos.begin(),
+        cell_pos.end(),
+        GlobalCmpQB(domain, domain_buffs));
   } else {  // Hilbert order
     std::vector<uint64_t> hilbert_values(coords_info_.coords_num_);
-    RETURN_NOT_OK(calculate_hilbert_values(buffs, &hilbert_values));
+    RETURN_NOT_OK(calculate_hilbert_values(domain_buffs, hilbert_values));
     parallel_sort(
         storage_manager_->compute_tp(),
-        cell_pos->begin(),
-        cell_pos->end(),
-        HilbertCmp(domain, &buffs, &hilbert_values));
+        cell_pos.begin(),
+        cell_pos.end(),
+        HilbertCmpQB(domain, domain_buffs, hilbert_values));
   }
 
   return Status::Ok();
@@ -2564,7 +2544,7 @@ Status Writer::unordered_write() {
 
   // Sort coordinates first
   std::vector<uint64_t> cell_pos;
-  RETURN_CANCEL_OR_ERROR(sort_coords(&cell_pos));
+  RETURN_CANCEL_OR_ERROR(sort_coords(cell_pos));
 
   // Check for coordinate duplicates
   RETURN_CANCEL_OR_ERROR(check_coord_dups(cell_pos));
@@ -2970,15 +2950,15 @@ void Writer::clean_up(const URI& uri) {
 }
 
 Status Writer::calculate_hilbert_values(
-    const std::vector<const QueryBuffer*>& buffs,
-    std::vector<uint64_t>* hilbert_values) const {
+    const DomainBuffersView& domain_buffers,
+    std::vector<uint64_t>& hilbert_values) const {
   auto dim_num = array_schema_->dim_num();
   Hilbert h(dim_num);
   auto bits = h.bits();
   auto max_bucket_val = ((uint64_t)1 << bits) - 1;
 
   // Calculate Hilbert values in parallel
-  assert(hilbert_values->size() >= coords_info_.coords_num_);
+  assert(hilbert_values.size() >= coords_info_.coords_num_);
   auto status = parallel_for(
       storage_manager_->compute_tp(),
       0,
@@ -2988,9 +2968,9 @@ Status Writer::calculate_hilbert_values(
         for (uint32_t d = 0; d < dim_num; ++d) {
           auto dim = array_schema_->dimension(d);
           coords[d] = hilbert_order::map_to_uint64(
-              *dim, buffs[d], c, bits, max_bucket_val);
+              *dim, domain_buffers.buffer_at(d), c, bits, max_bucket_val);
         }
-        (*hilbert_values)[c] = h.coords_to_hilbert(&coords[0]);
+        hilbert_values[c] = h.coords_to_hilbert(&coords[0]);
 
         return Status::Ok();
       });

@@ -39,6 +39,7 @@
 
 #include "tiledb/common/memory_tracker.h"
 #include "tiledb/common/status.h"
+#include "tiledb/sm/array_schema/array_schema.h"
 #include "tiledb/sm/crypto/encryption_key.h"
 #include "tiledb/sm/fragment/fragment_info.h"
 #include "tiledb/sm/metadata/metadata.h"

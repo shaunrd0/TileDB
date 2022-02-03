@@ -33,6 +33,7 @@
 #include "tiledb/sm/fragment/fragment_info.h"
 #include "tiledb/common/logger.h"
 #include "tiledb/sm/array/array.h"
+#include "tiledb/sm/array_schema/dimension.h"
 #include "tiledb/sm/enums/encryption_type.h"
 #include "tiledb/sm/filesystem/vfs.h"
 #include "tiledb/sm/misc/parallel_functions.h"

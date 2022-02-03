@@ -52,6 +52,7 @@ namespace tiledb {
 namespace sm {
 
 class Array;
+class DomainBuffersView;
 class FragmentMetadata;
 class TileMetadataGenerator;
 class StorageManager;
@@ -725,7 +726,7 @@ class Writer : public StrategyBase, public IQueryStrategy {
    * @param cell_pos The sorted cell positions to be created.
    * @return Status
    */
-  Status sort_coords(std::vector<uint64_t>* cell_pos) const;
+  Status sort_coords(std::vector<uint64_t>& cell_pos) const;
 
   /**
    * Splits the coordinates buffer into separate coordinate
@@ -948,10 +949,14 @@ class Writer : public StrategyBase, public IQueryStrategy {
    */
   bool all_last_tiles_empty() const;
 
-  /** Calculates the hilbert values of the input coordinate buffers. */
+  /** Calculates the hilbert values of the input coordinate buffers.
+   *
+   * @param[in] buffs QueryBuffers for which to calculate values
+   * @param[out] hilbert_values Output values written into caller-defined vector
+   */
   Status calculate_hilbert_values(
-      const std::vector<const QueryBuffer*>& buffs,
-      std::vector<uint64_t>* hilbert_values) const;
+      const DomainBuffersView& domain_buffers,
+      std::vector<uint64_t>& hilbert_values) const;
 
   /**
    * Prepares, filters and writes dense tiles for the given attribute.
