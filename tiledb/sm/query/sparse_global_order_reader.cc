@@ -1425,6 +1425,8 @@ Status SparseGlobalOrderReader::end_iteration() {
     num_rt += result_tiles_[f].size();
   }
 
+  set_fully_processed_fragments();
+
   logger_->debug("Done with iteration, num result tiles {1}", num_rt);
 
   array_memory_tracker_->set_budget(std::numeric_limits<uint64_t>::max());

@@ -86,7 +86,8 @@ FragmentMetadata::FragmentMetadata(
     , tile_index_base_(0)
     , version_(array_schema_->write_version())
     , timestamp_range_(timestamp_range)
-    , array_uri_(array_schema_->array_uri()) {
+    , array_uri_(array_schema_->array_uri())
+    , fully_processed_(false) {
   build_idx_map();
   array_schema_->get_name(&array_schema_name_);
 }
@@ -111,6 +112,7 @@ FragmentMetadata::FragmentMetadata(const FragmentMetadata& other) {
   idx_map_ = other.idx_map_;
   array_schema_name_ = other.array_schema_name_;
   array_uri_ = other.array_uri_;
+  fully_processed_ = other.fully_processed_;
 }
 
 FragmentMetadata& FragmentMetadata::operator=(const FragmentMetadata& other) {
@@ -130,6 +132,7 @@ FragmentMetadata& FragmentMetadata::operator=(const FragmentMetadata& other) {
   idx_map_ = other.idx_map_;
   array_schema_name_ = other.array_schema_name_;
   array_uri_ = other.array_uri_;
+  fully_processed_ = other.fully_processed_;
 
   return *this;
 }
@@ -634,14 +637,12 @@ Status FragmentMetadata::init(const NDRange& non_empty_domain) {
 
   // Initialize tile offsets
   tile_offsets_.resize(num);
-  tile_offsets_mtx_.resize(num);
   file_sizes_.resize(num);
   for (unsigned int i = 0; i < num; ++i)
     file_sizes_[i] = 0;
 
   // Initialize variable tile offsets
   tile_var_offsets_.resize(num);
-  tile_var_offsets_mtx_.resize(num);
   file_var_sizes_.resize(num);
   for (unsigned int i = 0; i < num; ++i)
     file_var_sizes_[i] = 0;
@@ -1028,6 +1029,10 @@ const std::string& FragmentMetadata::array_schema_name() {
 
 Status FragmentMetadata::load_tile_offsets(
     const EncryptionKey& encryption_key, std::vector<std::string>&& names) {
+  if (fully_processed_) {
+    return Status::Ok();
+  }
+
   // Sort 'names' in ascending order of their index. The
   // motivation is to load the offsets in order of their
   // layout for sequential reads to the file.
@@ -1062,8 +1067,79 @@ Status FragmentMetadata::load_tile_offsets(
   return Status::Ok();
 }
 
+void FragmentMetadata::set_fully_processed() {
+  if (!fully_processed_) {
+    // Set this fragment as fully processed. This will prevent loading any
+    // future metadata.
+    fully_processed_ = true;
+
+    // Lock the general mutex to wait for any pending operation.
+    { std::lock_guard<std::mutex> lock(mtx_); }
+
+    // Release memory in from the memory tracker for offsets, min, max, sums
+    // and null counts.
+    if (memory_tracker_ != nullptr) {
+      for (uint64_t idx = 0; idx < idx_map_.size(); idx++) {
+        memory_tracker_->release_memory(
+            tile_offsets_[idx].size() * sizeof(uint64_t));
+        memory_tracker_->release_memory(
+            tile_var_offsets_[idx].size() * sizeof(uint64_t));
+        memory_tracker_->release_memory(
+            tile_validity_offsets_[idx].size() * sizeof(uint64_t));
+        memory_tracker_->release_memory(
+            tile_min_buffer_[idx].size() * sizeof(uint64_t));
+        memory_tracker_->release_memory(tile_min_var_buffer_[idx].size());
+        memory_tracker_->release_memory(
+            tile_max_buffer_[idx].size() * sizeof(uint64_t));
+        memory_tracker_->release_memory(tile_max_var_buffer_[idx].size());
+        memory_tracker_->release_memory(
+            tile_sums_[idx].size() * sizeof(uint64_t));
+        memory_tracker_->release_memory(
+            tile_null_counts_[idx].size() * sizeof(uint64_t));
+      }
+    }
+
+    // Clear the memory for offsets, min, max, sums and null counts.
+    tile_offsets_.clear();
+    tile_var_offsets_.clear();
+    tile_var_sizes_.clear();
+    tile_validity_offsets_.clear();
+    tile_min_buffer_.clear();
+    tile_min_var_buffer_.clear();
+    tile_max_buffer_.clear();
+    tile_max_var_buffer_.clear();
+    tile_sums_.clear();
+    tile_null_counts_.clear();
+
+    loaded_metadata_.tile_offsets_.clear();
+    loaded_metadata_.tile_var_offsets_.clear();
+    loaded_metadata_.tile_var_sizes_.clear();
+    loaded_metadata_.tile_validity_offsets_.clear();
+    loaded_metadata_.tile_min_.clear();
+    loaded_metadata_.tile_max_.clear();
+    loaded_metadata_.tile_sum_.clear();
+    loaded_metadata_.tile_null_count_.clear();
+
+    // Release the memory footer and rtree.
+    memory_tracker_->release_memory(footer_size_);
+
+    auto freed_rtree = rtree_.free_memory();
+    if (memory_tracker_ != nullptr) {
+      memory_tracker_->release_memory(footer_size_);
+      memory_tracker_->release_memory(freed_rtree);
+    }
+
+    loaded_metadata_.footer_ = false;
+    loaded_metadata_.rtree_ = false;
+  }
+}
+
 Status FragmentMetadata::load_tile_min_values(
     const EncryptionKey& encryption_key, std::vector<std::string>&& names) {
+  if (fully_processed_) {
+    return Status::Ok();
+  }
+
   // Sort 'names' in ascending order of their index. The
   // motivation is to load the offsets in order of their
   // layout for sequential reads to the file.
@@ -1086,6 +1162,10 @@ Status FragmentMetadata::load_tile_min_values(
 
 Status FragmentMetadata::load_tile_max_values(
     const EncryptionKey& encryption_key, std::vector<std::string>&& names) {
+  if (fully_processed_) {
+    return Status::Ok();
+  }
+
   // Sort 'names' in ascending order of their index. The
   // motivation is to load the offsets in order of their
   // layout for sequential reads to the file.
@@ -1108,6 +1188,10 @@ Status FragmentMetadata::load_tile_max_values(
 
 Status FragmentMetadata::load_tile_sum_values(
     const EncryptionKey& encryption_key, std::vector<std::string>&& names) {
+  if (fully_processed_) {
+    return Status::Ok();
+  }
+
   // Sort 'names' in ascending order of their index. The
   // motivation is to load the offsets in order of their
   // layout for sequential reads to the file.
@@ -1130,6 +1214,10 @@ Status FragmentMetadata::load_tile_sum_values(
 
 Status FragmentMetadata::load_tile_null_count_values(
     const EncryptionKey& encryption_key, std::vector<std::string>&& names) {
+  if (fully_processed_) {
+    return Status::Ok();
+  }
+
   // Sort 'names' in ascending order of their index. The
   // motivation is to load the offsets in order of their
   // layout for sequential reads to the file.
@@ -1434,8 +1522,9 @@ Status FragmentMetadata::write_footer(Buffer* buff) const {
 }
 
 Status FragmentMetadata::load_rtree(const EncryptionKey& encryption_key) {
-  if (version_ <= 2)
+  if (version_ <= 2 || fully_processed_) {
     return Status::Ok();
+  }
 
   std::lock_guard<std::mutex> lock(mtx_);
 
@@ -1467,16 +1556,9 @@ Status FragmentMetadata::load_rtree(const EncryptionKey& encryption_key) {
   return Status::Ok();
 }
 
-void FragmentMetadata::free_rtree() {
-  auto freed = rtree_.free_memory();
-  if (memory_tracker_ != nullptr)
-    memory_tracker_->release_memory(freed);
-  loaded_metadata_.rtree_ = false;
-}
-
 Status FragmentMetadata::load_tile_var_sizes(
     const EncryptionKey& encryption_key, const std::string& name) {
-  if (version_ <= 2)
+  if (version_ <= 2 || fully_processed_)
     return Status::Ok();
 
   auto it = idx_map_.find(name);
@@ -1838,8 +1920,6 @@ Status FragmentMetadata::load_tile_offsets(
   if (loaded_metadata_.tile_offsets_[idx])
     return Status::Ok();
 
-  std::lock_guard<std::mutex> lock(tile_offsets_mtx_[idx]);
-
   if (loaded_metadata_.tile_offsets_[idx])
     return Status::Ok();
 
@@ -1866,8 +1946,6 @@ Status FragmentMetadata::load_tile_var_offsets(
   if (loaded_metadata_.tile_var_offsets_[idx])
     return Status::Ok();
 
-  std::lock_guard<std::mutex> lock(tile_var_offsets_mtx_[idx]);
-
   if (loaded_metadata_.tile_var_offsets_[idx])
     return Status::Ok();
 
@@ -1890,8 +1968,6 @@ Status FragmentMetadata::load_tile_var_sizes(
     const EncryptionKey& encryption_key, unsigned idx) {
   if (version_ <= 2)
     return Status::Ok();
-
-  std::lock_guard<std::mutex> lock(mtx_);
 
   if (loaded_metadata_.tile_var_sizes_[idx])
     return Status::Ok();
@@ -1916,8 +1992,6 @@ Status FragmentMetadata::load_tile_validity_offsets(
   if (version_ <= 6)
     return Status::Ok();
 
-  std::lock_guard<std::mutex> lock(mtx_);
-
   if (loaded_metadata_.tile_validity_offsets_[idx])
     return Status::Ok();
 
@@ -1941,8 +2015,6 @@ Status FragmentMetadata::load_tile_min_values(
   if (version_ <= 10)
     return Status::Ok();
 
-  std::lock_guard<std::mutex> lock(mtx_);
-
   if (loaded_metadata_.tile_min_[idx])
     return Status::Ok();
 
@@ -1964,8 +2036,6 @@ Status FragmentMetadata::load_tile_max_values(
     const EncryptionKey& encryption_key, unsigned idx) {
   if (version_ <= 10)
     return Status::Ok();
-
-  std::lock_guard<std::mutex> lock(mtx_);
 
   if (loaded_metadata_.tile_max_[idx])
     return Status::Ok();
@@ -1989,8 +2059,6 @@ Status FragmentMetadata::load_tile_sum_values(
   if (version_ <= 10)
     return Status::Ok();
 
-  std::lock_guard<std::mutex> lock(mtx_);
-
   if (loaded_metadata_.tile_sum_[idx])
     return Status::Ok();
 
@@ -2012,8 +2080,6 @@ Status FragmentMetadata::load_tile_null_count_values(
     const EncryptionKey& encryption_key, unsigned idx) {
   if (version_ <= 10)
     return Status::Ok();
-
-  std::lock_guard<std::mutex> lock(mtx_);
 
   if (loaded_metadata_.tile_null_count_[idx])
     return Status::Ok();
@@ -2322,7 +2388,6 @@ Status FragmentMetadata::load_tile_offsets(ConstBuffer* buff) {
 
   // Allocate tile offsets
   tile_offsets_.resize(attribute_num + 1);
-  tile_offsets_mtx_.resize(attribute_num + 1);
 
   // For all attributes, get the tile offsets
   for (unsigned int i = 0; i < attribute_num + 1; ++i) {
@@ -2412,7 +2477,6 @@ Status FragmentMetadata::load_tile_var_offsets(ConstBuffer* buff) {
 
   // Allocate tile offsets
   tile_var_offsets_.resize(attribute_num);
-  tile_var_offsets_mtx_.resize(attribute_num);
 
   // For all attributes, get the variable tile offsets
   for (unsigned int i = 0; i < attribute_num; ++i) {
@@ -3151,9 +3215,7 @@ Status FragmentMetadata::load_footer(
   num += (version_ >= 5) ? array_schema_->dim_num() : 0;
 
   tile_offsets_.resize(num);
-  tile_offsets_mtx_.resize(num);
   tile_var_offsets_.resize(num);
-  tile_var_offsets_mtx_.resize(num);
   tile_var_sizes_.resize(num);
   tile_validity_offsets_.resize(num);
   tile_min_buffer_.resize(num);
@@ -3180,6 +3242,17 @@ Status FragmentMetadata::load_footer(
   // read
   if (footer_size_ == 0)
     footer_size_ = cbuff->offset() - offset;
+
+  // Adjust memory usage in memory tracker.
+  if (memory_tracker_ != nullptr &&
+      !memory_tracker_->take_memory(footer_size_)) {
+    return LOG_STATUS(Status_FragmentMetadataError(
+        "Cannot load file footer; Insufficient memory budget; Needed " +
+        std::to_string(footer_size_) + " but only had " +
+        std::to_string(memory_tracker_->get_memory_available()) +
+        " from budget " +
+        std::to_string(memory_tracker_->get_memory_budget())));
+  }
 
   return Status::Ok();
 }
@@ -3461,16 +3534,6 @@ Status FragmentMetadata::read_file_footer(
   RETURN_NOT_OK(get_footer_offset_and_size(footer_offset, footer_size));
 
   storage_manager_->stats()->add_counter("read_frag_meta_size", *footer_size);
-
-  if (memory_tracker_ != nullptr &&
-      !memory_tracker_->take_memory(*footer_size)) {
-    return LOG_STATUS(Status_FragmentMetadataError(
-        "Cannot load file footer; Insufficient memory budget; Needed " +
-        std::to_string(*footer_size) + " but only had " +
-        std::to_string(memory_tracker_->get_memory_available()) +
-        " from budget " +
-        std::to_string(memory_tracker_->get_memory_budget())));
-  }
 
   // Read footer
   return storage_manager_->read(

@@ -1496,6 +1496,8 @@ Status SparseUnorderedWithDupsReader<BitmapType>::end_iteration() {
     assert(memory_used_result_tile_ranges_ == 0);
   }
 
+  set_fully_processed_fragments();
+
   logger_->debug(
       "Done with iteration, num result tiles {0}", result_tiles_[0].size());
 

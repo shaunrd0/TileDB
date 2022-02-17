@@ -207,11 +207,9 @@ Status SparseIndexReaderBase::load_initial_data() {
   read_state_.done_adding_result_tiles_ = false;
 
   // Make a list of dim/attr that will be loaded for query condition.
-  if (!initial_data_loaded_) {
-    if (!condition_.empty()) {
-      for (auto& name : condition_.field_names()) {
-        qc_loaded_names_.emplace_back(name);
-      }
+  if (!condition_.empty()) {
+    for (auto& name : condition_.field_names()) {
+      qc_loaded_names_.emplace_back(name);
     }
   }
 
@@ -699,6 +697,14 @@ void SparseIndexReaderBase::remove_result_tile_range(uint64_t f) {
   {
     std::unique_lock<std::mutex> lck(mem_budget_mtx_);
     memory_used_result_tile_ranges_ -= sizeof(std::pair<uint64_t, uint64_t>);
+  }
+}
+
+void SparseIndexReaderBase::set_fully_processed_fragments() {
+  for (uint64_t f = 0; f < fragment_metadata_.size(); f++) {
+    if (all_tiles_loaded_[f]) {
+      fragment_metadata_[f]->set_fully_processed();
+    }
   }
 }
 

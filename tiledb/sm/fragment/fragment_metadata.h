@@ -663,9 +663,6 @@ class FragmentMetadata {
   /** Loads the R-tree from storage. */
   Status load_rtree(const EncryptionKey& encryption_key);
 
-  /** Frees the memory associated with the rtree. */
-  void free_rtree();
-
   /**
    * Loads the variable tile sizes for the input attribute or dimension idx
    * from storage.
@@ -722,6 +719,12 @@ class FragmentMetadata {
    */
   Status load_tile_null_count_values(
       const EncryptionKey& encryption_key, std::vector<std::string>&& names);
+
+  /**
+   * Set the fragment as fully processed and release used memory. This will
+   * also prevent loading any further metadata.
+   */
+  void set_fully_processed();
 
   /**
    * Returns ArraySchema
@@ -841,12 +844,6 @@ class FragmentMetadata {
   /** Local mutex for thread-safety. */
   std::mutex mtx_;
 
-  /** Mutex per tile offset loading. */
-  std::deque<std::mutex> tile_offsets_mtx_;
-
-  /** Mutex per tile var offset loading. */
-  std::deque<std::mutex> tile_var_offsets_mtx_;
-
   /** The non-empty domain of the fragment. */
   NDRange non_empty_domain_;
 
@@ -927,6 +924,9 @@ class FragmentMetadata {
 
   /** The uri of the array the metadata belongs to. */
   URI array_uri_;
+
+  /** Specifies if this fragment is fully processed. */
+  bool fully_processed_;
 
   /* ********************************* */
   /*           PRIVATE METHODS         */

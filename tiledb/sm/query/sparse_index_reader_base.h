@@ -420,6 +420,11 @@ class SparseIndexReaderBase : public ReaderBase {
    * @param f Fragment index.
    */
   void remove_result_tile_range(uint64_t f);
+
+  /**
+   * Sets fully processed fragments.
+   */
+  void set_fully_processed_fragments();
 };
 
 }  // namespace sm

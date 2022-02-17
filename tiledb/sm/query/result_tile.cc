@@ -851,8 +851,8 @@ void ResultTile::compute_results_count_sparse_string(
     if (result_count[i] == 0 &&
         memcmp(
             &result_count[i],
-            &result_count[i + 1],
-            (partition_size - 1) * sizeof(uint64_t)) == 0)
+            reinterpret_cast<uint8_t*>(&result_count[i]) + 1,
+            partition_size * sizeof(BitmapType) - 1) == 0)
       continue;
 
     {
