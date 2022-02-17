@@ -308,6 +308,14 @@ class FragmentMetadata {
   Status set_num_tiles(uint64_t num_tiles);
 
   /**
+   * Sets the domain of the RTree during deserialization.
+   *
+   * @param domain The domain to be set.
+   * @return Status
+   */
+  void set_rtree_domain(const Domain* domain);
+
+  /**
    * Sets the tile "index base" which is added to the tile index in the set_*()
    * functions. Only used during global order writes/appends.
    *
@@ -1455,7 +1463,7 @@ class FragmentMetadata {
    */
   Status write_generic_tile_to_file(
       const EncryptionKey& encryption_key,
-      Buffer&& buff,
+      Buffer& buff,
       uint64_t* nbytes) const;
 
   /**
