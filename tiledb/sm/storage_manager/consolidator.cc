@@ -43,6 +43,7 @@
 #include "tiledb/sm/misc/uuid.h"
 #include "tiledb/sm/query/query.h"
 #include "tiledb/sm/stats/global_stats.h"
+#include "tiledb/sm/storage_format/parse_uri.h"
 #include "tiledb/sm/storage_manager/storage_manager.h"
 #include "tiledb/sm/tile/generic_tile_io.h"
 #include "tiledb/sm/tile/tile.h"

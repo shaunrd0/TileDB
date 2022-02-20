@@ -46,7 +46,7 @@
 #include "tiledb/sm/filter/compression_filter.h"
 #include "tiledb/sm/misc/hilbert.h"
 #include "tiledb/sm/misc/time.h"
-#include "tiledb/sm/misc/utils.h"  // get_timestamp_range
+#include "tiledb/sm/storage_format/parse_uri.h"
 
 #include <cassert>
 #include <iostream>

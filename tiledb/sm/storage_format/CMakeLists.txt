@@ -1,9 +1,9 @@
 #
-# tiledb/sm/CMakeLists.txt
+# tiledb/sm/misc/CMakeLists.txt
 #
 # The MIT License
 #
-# Copyright (c) 2021 TileDB, Inc.
+# Copyright (c) 2022 TileDB, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,20 +22,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
+
+include(common NO_POLICY_SCOPE)
+
 #
-
-include(common-root)
-
-add_subdirectory(array_schema)
-add_subdirectory(buffer)
-add_subdirectory(compressors)
-add_subdirectory(config)
-add_subdirectory(crypto)
-add_subdirectory(filesystem)
-add_subdirectory(filter)
-add_subdirectory(metadata)
-add_subdirectory(misc)
-add_subdirectory(query)
-add_subdirectory(stats)
-add_subdirectory(storage_format)
-add_subdirectory(tile)
+# `uri_format` object library
+#
+add_library(uri_format OBJECT parse_uri.cc)
+target_link_libraries(uri_format PUBLIC baseline $<TARGET_OBJECTS:baseline>)
+target_link_libraries(uri_format PUBLIC vfs $<TARGET_OBJECTS:vfs>)
+#
+# Test-compile of object library ensures link-completeness
+#
+add_executable(compile_uri_format EXCLUDE_FROM_ALL)
+target_link_libraries(compile_uri_format PRIVATE uri_format)
+target_sources(compile_uri_format PRIVATE test/compile_uri_format_main.cc)
