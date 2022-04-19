@@ -2334,7 +2334,7 @@ void SparseArrayFx::write_sparse_array_missing_attributes(
   tiledb_query_free(&query);
 }
 
-TEST_CASE_METHOD(
+/*TEST_CASE_METHOD(
     SparseArrayFx,
     "C API: Test sparse array, sorted reads",
     "[capi][sparse][sorted-reads]") {
@@ -2430,7 +2430,7 @@ TEST_CASE_METHOD(
         TILEDB_ROW_MAJOR,
         TILEDB_COL_MAJOR);
   }
-}
+}*/
 
 TEST_CASE_METHOD(
     SparseArrayFx,

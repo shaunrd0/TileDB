@@ -531,14 +531,8 @@ TEST_CASE(
   REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
   result_elts = query.result_buffer_elements();
   result_num = result_elts["rows"].second;
-  if (test::use_refactored_sparse_global_order_reader()) {
-    REQUIRE(result_num == 2);
-    REQUIRE(data[0] == 'c');
-    REQUIRE(data[1] == 'n');
-  } else {
-    REQUIRE(result_num == 1);
-    REQUIRE(data[0] == 'c');
-  }
+  REQUIRE(result_num == 1);
+  REQUIRE(data[0] == 'c');
 
   // Resubmit
   st = query.submit();
@@ -547,78 +541,51 @@ TEST_CASE(
   result_num = result_elts["rows"].second;
   REQUIRE(result_num == 2);
 
-  if (test::use_refactored_sparse_global_order_reader()) {
-    REQUIRE(data[0] == 'd');
-    REQUIRE(data[1] == 'e');
-  } else {
-    REQUIRE(data[0] == 'n');
-    REQUIRE(data[1] == 'd');
-  }
+  REQUIRE(data[0] == 'n');
+  REQUIRE(data[1] == 'd');
 
   // Resubmit
   st = query.submit();
   REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
   result_elts = query.result_buffer_elements();
   result_num = result_elts["rows"].second;
-  if (test::use_refactored_sparse_global_order_reader()) {
-    REQUIRE(result_num == 2);
-    REQUIRE(data[0] == 'f');
-    REQUIRE(data[1] == 'g');
-  } else {
-    REQUIRE(result_num == 1);
-    REQUIRE(data[0] == 'e');
-  }
+  REQUIRE(result_num == 1);
+  REQUIRE(data[0] == 'e');
 
   // Resubmit
   st = query.submit();
   REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
   result_elts = query.result_buffer_elements();
   result_num = result_elts["rows"].second;
-  if (test::use_refactored_sparse_global_order_reader()) {
-    REQUIRE(result_num == 2);
-    REQUIRE(data[0] == 'h');
-    REQUIRE(data[1] == 'i');
-  } else {
-    REQUIRE(result_num == 1);
-    REQUIRE(data[0] == 'f');
-  }
+  REQUIRE(result_num == 1);
+  REQUIRE(data[0] == 'f');
 
   // Resubmit
   st = query.submit();
-  if (test::use_refactored_sparse_global_order_reader()) {
-    REQUIRE(st == tiledb::Query::Status::COMPLETE);
-  } else {
-    REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
-  }
+  REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
   result_elts = query.result_buffer_elements();
   result_num = result_elts["rows"].second;
 
-  if (test::use_refactored_sparse_global_order_reader()) {
-    REQUIRE(result_num == 2);
-    REQUIRE(data[0] == 'j');
-    REQUIRE(data[1] == 'k');
-  } else {
-    REQUIRE(result_num == 2);
-    REQUIRE(data[0] == 'g');
-    REQUIRE(data[1] == 'h');
+  REQUIRE(result_num == 2);
+  REQUIRE(data[0] == 'g');
+  REQUIRE(data[1] == 'h');
 
-    // Resubmit
-    st = query.submit();
-    REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
-    result_elts = query.result_buffer_elements();
-    result_num = result_elts["rows"].second;
-    REQUIRE(result_num == 1);
-    REQUIRE(data[0] == 'i');
+  // Resubmit
+  st = query.submit();
+  REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
+  result_elts = query.result_buffer_elements();
+  result_num = result_elts["rows"].second;
+  REQUIRE(result_num == 1);
+  REQUIRE(data[0] == 'i');
 
-    // Resubmit
-    st = query.submit();
-    REQUIRE(st == tiledb::Query::Status::COMPLETE);
-    result_elts = query.result_buffer_elements();
-    result_num = result_elts["rows"].second;
-    REQUIRE(result_num == 2);
-    REQUIRE(data[0] == 'j');
-    REQUIRE(data[1] == 'k');
-  }
+  // Resubmit
+  st = query.submit();
+  REQUIRE(st == tiledb::Query::Status::COMPLETE);
+  result_elts = query.result_buffer_elements();
+  result_num = result_elts["rows"].second;
+  REQUIRE(result_num == 2);
+  REQUIRE(data[0] == 'j');
+  REQUIRE(data[1] == 'k');
 
   // Close array.
   array.close();
@@ -763,14 +730,8 @@ TEST_CASE(
   REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
   result_elts = query.result_buffer_elements();
   result_num = result_elts["rows"].second;
-  if (test::use_refactored_sparse_global_order_reader()) {
-    REQUIRE(result_num == 2);
-    REQUIRE(data[0] == 'c');
-    REQUIRE(data[1] == 'n');
-  } else {
-    REQUIRE(result_num == 1);
-    REQUIRE(data[0] == 'c');
-  }
+  REQUIRE(result_num == 1);
+  REQUIRE(data[0] == 'c');
 
   // Resubmit
   query.set_subarray(subarray);
@@ -779,13 +740,8 @@ TEST_CASE(
   result_elts = query.result_buffer_elements();
   result_num = result_elts["rows"].second;
   REQUIRE(result_num == 2);
-  if (test::use_refactored_sparse_global_order_reader()) {
-    REQUIRE(data[0] == 'd');
-    REQUIRE(data[1] == 'e');
-  } else {
-    REQUIRE(data[0] == 'n');
-    REQUIRE(data[1] == 'd');
-  }
+  REQUIRE(data[0] == 'n');
+  REQUIRE(data[1] == 'd');
 
   // Resubmit
   query.set_subarray(subarray);
@@ -793,14 +749,8 @@ TEST_CASE(
   REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
   result_elts = query.result_buffer_elements();
   result_num = result_elts["rows"].second;
-  if (test::use_refactored_sparse_global_order_reader()) {
-    REQUIRE(result_num == 2);
-    REQUIRE(data[0] == 'f');
-    REQUIRE(data[1] == 'g');
-  } else {
-    REQUIRE(result_num == 1);
-    REQUIRE(data[0] == 'e');
-  }
+  REQUIRE(result_num == 1);
+  REQUIRE(data[0] == 'e');
 
   // Resubmit
   query.set_subarray(subarray);
@@ -808,51 +758,36 @@ TEST_CASE(
   REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
   result_elts = query.result_buffer_elements();
   result_num = result_elts["rows"].second;
-  if (test::use_refactored_sparse_global_order_reader()) {
-    REQUIRE(result_num == 2);
-    REQUIRE(data[0] == 'h');
-    REQUIRE(data[1] == 'i');
-  } else {
-    REQUIRE(result_num == 1);
-    REQUIRE(data[0] == 'f');
-  }
+  REQUIRE(result_num == 1);
+  REQUIRE(data[0] == 'f');
 
   // Resubmit
   query.set_subarray(subarray);
   st = query.submit();
-  if (test::use_refactored_sparse_global_order_reader()) {
-    REQUIRE(st == tiledb::Query::Status::COMPLETE);
-  } else {
-    REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
-  }
+  REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
+
   result_elts = query.result_buffer_elements();
   result_num = result_elts["rows"].second;
-  if (test::use_refactored_sparse_global_order_reader()) {
-    REQUIRE(result_num == 2);
-    REQUIRE(data[0] == 'j');
-    REQUIRE(data[1] == 'k');
-  } else {
-    REQUIRE(result_num == 2);
-    REQUIRE(data[0] == 'g');
-    REQUIRE(data[1] == 'h');
+  REQUIRE(result_num == 2);
+  REQUIRE(data[0] == 'g');
+  REQUIRE(data[1] == 'h');
 
-    // Resubmit
-    st = query.submit();
-    REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
-    result_elts = query.result_buffer_elements();
-    result_num = result_elts["rows"].second;
-    REQUIRE(result_num == 1);
-    REQUIRE(data[0] == 'i');
+  // Resubmit
+  st = query.submit();
+  REQUIRE(st == tiledb::Query::Status::INCOMPLETE);
+  result_elts = query.result_buffer_elements();
+  result_num = result_elts["rows"].second;
+  REQUIRE(result_num == 1);
+  REQUIRE(data[0] == 'i');
 
-    // Resubmit
-    st = query.submit();
-    REQUIRE(st == tiledb::Query::Status::COMPLETE);
-    result_elts = query.result_buffer_elements();
-    result_num = result_elts["rows"].second;
-    REQUIRE(result_num == 2);
-    REQUIRE(data[0] == 'j');
-    REQUIRE(data[1] == 'k');
-  }
+  // Resubmit
+  st = query.submit();
+  REQUIRE(st == tiledb::Query::Status::COMPLETE);
+  result_elts = query.result_buffer_elements();
+  result_num = result_elts["rows"].second;
+  REQUIRE(result_num == 2);
+  REQUIRE(data[0] == 'j');
+  REQUIRE(data[1] == 'k');
 
   // Close array.
   array.close();

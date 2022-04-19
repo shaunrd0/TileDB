@@ -1074,9 +1074,7 @@ Status Query::create_strategy() {
     } else if (
         use_refactored_sparse_global_order_reader() &&
         !array_schema_->dense() &&
-        (layout_ == Layout::GLOBAL_ORDER ||
-         (layout_ == Layout::UNORDERED && subarray_.range_num() <= 1))) {
-      // Using the reader for unordered queries to do deduplication.
+        (layout_ == Layout::GLOBAL_ORDER && !subarray_.is_set())) {
       use_default = false;
       strategy_ = tdb_unique_ptr<IQueryStrategy>(tdb_new(
           SparseGlobalOrderReader,

@@ -55,6 +55,60 @@ namespace sm {
 class Array;
 class StorageManager;
 
+/** Result tile for global order reader. */
+class GlobalOrderResultTile : public ResultTile {
+ public:
+  /* ********************************* */
+  /*     CONSTRUCTORS & DESTRUCTORS    */
+  /* ********************************* */
+  GlobalOrderResultTile(
+      unsigned frag_idx, uint64_t tile_idx, const ArraySchema& array_schema)
+      : ResultTile(frag_idx, tile_idx, array_schema)
+      , used_(false)
+      , coords_loaded_(false) {
+  }
+
+  /** Move constructor. */
+  GlobalOrderResultTile(GlobalOrderResultTile&& other) noexcept {
+    // Swap with the argument
+    swap(other);
+  }
+
+  /** Move-assign operator. */
+  GlobalOrderResultTile& operator=(GlobalOrderResultTile&& other) {
+    // Swap with the argument
+    swap(other);
+
+    return *this;
+  }
+
+  DISABLE_COPY_AND_COPY_ASSIGN(GlobalOrderResultTile);
+
+  /* ********************************* */
+  /*          PUBLIC METHODS           */
+  /* ********************************* */
+
+  /** Swaps the contents (all field values) of this tile with the given tile. */
+  void swap(GlobalOrderResultTile& tile) {
+    ResultTile::swap(tile);
+    std::swap(used_, tile.used_);
+    std::swap(hilbert_values_, tile.hilbert_values_);
+  }
+
+  /* ********************************* */
+  /*         PUBLIC ATTRIBUTES         */
+  /* ********************************* */
+
+  /** Was the tile used in merging. */
+  bool used_;
+
+  /** Were ther coords loaded for this tile. */
+  bool coords_loaded_;
+
+  /** Hilbert values for this tile. */
+  std::vector<uint64_t> hilbert_values_;
+};
+
 /** Processes sparse global order read queries. */
 class SparseGlobalOrderReader : public SparseIndexReaderBase,
                                 public IQueryStrategy {
@@ -141,7 +195,7 @@ class SparseGlobalOrderReader : public SparseIndexReaderBase,
   inline static std::atomic<uint64_t> logger_id_ = 0;
 
   /** The result tiles currently loaded. */
-  ResultTileListPerFragment<uint8_t> result_tiles_;
+  std::vector<std::list<GlobalOrderResultTile>> result_tiles_;
 
   /** Memory used for coordinates tiles per fragment. */
   std::vector<uint64_t> memory_used_for_coords_;
@@ -149,22 +203,34 @@ class SparseGlobalOrderReader : public SparseIndexReaderBase,
   /** Memory budget per fragment. */
   double per_fragment_memory_;
 
-  /** Memory used for qc tiles per fragment. */
-  std::vector<uint64_t> memory_used_for_qc_tiles_;
-
-  /** Memory budget per fragment for qc tiles. */
-  double per_fragment_qc_memory_;
-
   /* ********************************* */
   /*           PRIVATE METHODS         */
   /* ********************************* */
+
+  /**
+   * Get the coordinate tiles size for a dimension.
+   *
+   * @param dim_num Number of dimensions.
+   * @param f Fragment index.
+   * @param t Tile index.
+   *
+   * @return Status, tiles_size.
+   */
+  tuple<Status, optional<uint64_t>> get_coord_tiles_size(
+      unsigned dim_num, unsigned f, uint64_t t);
+
+  /**
+   * Load initial query data.
+   *
+   * @return Status.
+   */
+  Status load_initial_data();
 
   /**
    * Add a result tile to process, making sure maximum budget is respected.
    *
    * @param dim_num Number of dimensions.
    * @param memory_budget_coords_tiles Memory budget for coordinate tiles.
-   * @param memory_budget_qc_tiles Memory budget for query condition tiles.
    * @param f Fragment index.
    * @param t Tile index.
    * @param array_schema Array schema.
@@ -174,7 +240,6 @@ class SparseGlobalOrderReader : public SparseIndexReaderBase,
   tuple<Status, optional<bool>> add_result_tile(
       const unsigned dim_num,
       const uint64_t memory_budget_coords_tiles,
-      const uint64_t memory_budget_qc_tiles,
       const unsigned f,
       const uint64_t t,
       const ArraySchema& array_schema);
@@ -199,24 +264,17 @@ class SparseGlobalOrderReader : public SparseIndexReaderBase,
    * for a specific fragment.
    *
    * @param frag_idx Fragment index.
-   * @param cell_idx Cell index.
    * @param result_tiles_it Iterator, per frag, in the list of retult tiles.
-   * @param result_tile_used Boolean, per frag, to know if a tile was used.
    * @param tile_queue Queue of one result coords, per fragment, sorted.
-   * @param tile_queue_mutex Protects tile_queue.
    *
    * @return Status, more_tiles.
    */
   template <class T>
   tuple<Status, optional<bool>> add_next_tile_to_queue(
       unsigned int frag_idx,
-      uint64_t cell_idx,
-      std::vector<std::list<ResultTileWithBitmap<uint8_t>>::iterator>&
-          result_tiles_it,
-      std::vector<uint8_t>& result_tile_used,
+      std::vector<std::list<GlobalOrderResultTile>::iterator>& result_tiles_it,
       std::priority_queue<ResultCoords, std::vector<ResultCoords>, T>&
-          tile_queue,
-      std::mutex& tile_queue_mutex);
+          tile_queue);
 
   /**
    * Computes a tile's Hilbert values for a tile.
@@ -387,8 +445,7 @@ class SparseGlobalOrderReader : public SparseIndexReaderBase,
    * @return Status.
    */
   Status remove_result_tile(
-      const unsigned frag_idx,
-      std::list<ResultTileWithBitmap<uint8_t>>::iterator rt);
+      const unsigned frag_idx, std::list<GlobalOrderResultTile>::iterator rt);
 
   /**
    * Clean up processed data after copying and get ready for the next

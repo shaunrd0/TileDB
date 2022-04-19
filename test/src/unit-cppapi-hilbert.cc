@@ -1376,11 +1376,7 @@ TEST_CASE(
     CHECK_NOTHROW(query_r.submit());
 
     // Check results again
-    CHECK(
-        query_r.query_status() ==
-        (test::use_refactored_sparse_global_order_reader() ?
-             Query::Status::COMPLETE :
-             Query::Status::INCOMPLETE));
+    CHECK(query_r.query_status() == Query::Status::INCOMPLETE);
     CHECK(query_r.result_buffer_elements()["a"].second == 2);
     c_buff_a = {1, 4};
     c_buff_d1 = {0.41f, 0.4f};
@@ -1389,16 +1385,10 @@ TEST_CASE(
     CHECK(r_buff_d1 == c_buff_d1);
     CHECK(r_buff_d2 == c_buff_d2);
 
-    /**
-     * Old reader needs an extra round here to finish processing all the
-     * partitions in the subarray. New reader is done earlier.
-     */
-    if (!test::use_refactored_sparse_global_order_reader()) {
-      // Read until complete
-      CHECK_NOTHROW(query_r.submit());
-      CHECK(query_r.query_status() == Query::Status::COMPLETE);
-      CHECK(query_r.result_buffer_elements()["a"].second == 0);
-    }
+    // Read until complete
+    CHECK_NOTHROW(query_r.submit());
+    CHECK(query_r.query_status() == Query::Status::COMPLETE);
+    CHECK(query_r.result_buffer_elements()["a"].second == 0);
 
     array_r.close();
   }
@@ -2190,25 +2180,12 @@ TEST_CASE(
     std::string c_buff_d2;
     std::vector<uint64_t> c_off_d2;
 
-    /**
-     * Refactored reader tries to fill as much as possible.
-     * Old reader splits partition in two.
-     */
-    if (test::use_refactored_sparse_global_order_reader()) {
-      CHECK(query_r.result_buffer_elements()["a"].second == 3);
-      c_buff_a = {3, 2, 1};
-      c_buff_d1 = std::string("dogcamel33");
-      c_off_d1 = {0, 3, 8};
-      c_buff_d2 = std::string("stopstockt1");
-      c_off_d2 = {0, 4, 9};
-    } else {
-      CHECK(query_r.result_buffer_elements()["a"].second == 2);
-      c_buff_a = {3, 2};
-      c_buff_d1 = std::string("dogcamel");
-      c_off_d1 = {0, 3};
-      c_buff_d2 = std::string("stopstock");
-      c_off_d2 = {0, 4};
-    }
+    CHECK(query_r.result_buffer_elements()["a"].second == 2);
+    c_buff_a = {3, 2};
+    c_buff_d1 = std::string("dogcamel");
+    c_off_d1 = {0, 3};
+    c_buff_d2 = std::string("stopstock");
+    c_off_d2 = {0, 4};
 
     CHECK(r_buff_a == c_buff_a);
     CHECK(r_buff_d1 == c_buff_d1);
@@ -2231,21 +2208,12 @@ TEST_CASE(
     r_off_d2.resize(query_r.result_buffer_elements()["d2"].first);
     r_buff_a.resize(query_r.result_buffer_elements()["a"].second);
 
-    if (test::use_refactored_sparse_global_order_reader()) {
-      CHECK(query_r.result_buffer_elements()["a"].second == 1);
-      c_buff_a = {4};
-      c_buff_d1 = std::string("1a");
-      c_off_d1 = {0};
-      c_buff_d2 = std::string("cat");
-      c_off_d2 = {0};
-    } else {
-      CHECK(query_r.result_buffer_elements()["a"].second == 2);
-      c_buff_a = {1, 4};
-      c_buff_d1 = std::string("331a");
-      c_off_d1 = {0, 2};
-      c_buff_d2 = std::string("t1cat");
-      c_off_d2 = {0, 2};
-    }
+    CHECK(query_r.result_buffer_elements()["a"].second == 2);
+    c_buff_a = {1, 4};
+    c_buff_d1 = std::string("331a");
+    c_off_d1 = {0, 2};
+    c_buff_d2 = std::string("t1cat");
+    c_off_d2 = {0, 2};
 
     CHECK(r_buff_a == c_buff_a);
     CHECK(r_buff_d1 == c_buff_d1);

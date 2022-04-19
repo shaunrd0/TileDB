@@ -42,7 +42,7 @@
 #include "tiledb/sm/enums/layout.h"
 #include "tiledb/sm/query/domain_buffer.h"
 #include "tiledb/sm/query/result_coords.h"
-#include "tiledb/sm/query/sparse_index_reader_base.h"
+#include "tiledb/sm/query/sparse_global_order_reader.h"
 
 using namespace tiledb::common;
 
@@ -150,10 +150,8 @@ class HilbertCmp : protected CellCmpBase {
    * @return `true` if `a` precedes `b` and `false` otherwise.
    */
   bool operator()(const ResultCoords& a, const ResultCoords& b) const {
-    auto hilbert_a =
-        ((ResultTileWithBitmap<uint8_t>*)a.tile_)->hilbert_values_[a.pos_];
-    auto hilbert_b =
-        ((ResultTileWithBitmap<uint8_t>*)b.tile_)->hilbert_values_[b.pos_];
+    auto hilbert_a = ((GlobalOrderResultTile*)a.tile_)->hilbert_values_[a.pos_];
+    auto hilbert_b = ((GlobalOrderResultTile*)b.tile_)->hilbert_values_[b.pos_];
     if (hilbert_a < hilbert_b)
       return true;
     else if (hilbert_a > hilbert_b)

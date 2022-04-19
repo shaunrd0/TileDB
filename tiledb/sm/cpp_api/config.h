@@ -409,14 +409,6 @@ class Config {
    *    Ratio of the budget allocated for coordinates in the sparse global
    *    order reader. <br>
    *    **Default**: 0.5
-   * - `sm.mem.reader.sparse_global_order.ratio_query_condition` <br>
-   *    Ratio of the budget allocated for the query condition in the sparse
-   *    global order reader. <br>
-   *    **Default**: 0.25
-   * - `sm.mem.reader.sparse_global_order.ratio_tile_ranges` <br>
-   *    Ratio of the budget allocated for tile ranges in the sparse global
-   *    order reader. <br>
-   *    **Default**: 0.1
    * - `sm.mem.reader.sparse_global_order.ratio_array_data` <br>
    *    Ratio of the budget allocated for array data in the sparse global
    *    order reader. <br>
