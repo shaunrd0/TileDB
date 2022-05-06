@@ -168,7 +168,7 @@ class Group {
    * REST. A lock should already by taken before load_metadata is called.
    */
   Metadata* unsafe_metadata();
-  const Metadata* metadata() const;
+  const Metadata* metadata();
 
   /**
    * Set metadata loaded

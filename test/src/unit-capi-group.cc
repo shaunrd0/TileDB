@@ -969,4 +969,76 @@ TEST_CASE_METHOD(
   tiledb_group_free(&group4_read);
   remove_temp_dir(temp_dir);
 }
+
+TEST_CASE_METHOD(
+    GroupFx,
+    "C API: Group metadata serialization",
+    "[capi][group][metadata][serialization]") {
+  std::string temp_dir = fs_vec_[0]->temp_dir();
+  create_temp_dir(temp_dir);
+
+  tiledb::sm::URI group_uri(temp_dir + "group");
+  REQUIRE(tiledb_group_create(ctx_, group_uri.c_str()) == TILEDB_OK);
+  tiledb::sm::URI group_deserialized_uri(temp_dir + "group_deserialized");
+  REQUIRE(
+      tiledb_group_create(ctx_, group_deserialized_uri.c_str()) == TILEDB_OK);
+
+  tiledb_group_t* group;
+  int rc = tiledb_group_alloc(ctx_, group_uri.c_str(), &group);
+  REQUIRE(rc == TILEDB_OK);
+  set_group_timestamp(group, 1);
+  rc = tiledb_group_open(ctx_, group, TILEDB_WRITE);
+  REQUIRE(rc == TILEDB_OK);
+
+  int value = 123;
+  tiledb_group_put_metadata(
+      ctx_, group, "testmetadata", TILEDB_INT32, 1, &value);
+
+  rc = tiledb_group_close(ctx_, group);
+  tiledb_group_free(&group);
+
+  // Reopen in read mode
+  rc = tiledb_group_alloc(ctx_, group_uri.c_str(), &group);
+  REQUIRE(rc == TILEDB_OK);
+  set_group_timestamp(group, 1);
+  rc = tiledb_group_open(ctx_, group, TILEDB_READ);
+  REQUIRE(rc == TILEDB_OK);
+
+  tiledb_group_t* group_deserialized;
+  rc = tiledb_group_alloc(
+      ctx_, group_deserialized_uri.c_str(), &group_deserialized);
+  REQUIRE(rc == TILEDB_OK);
+  set_group_timestamp(group_deserialized, 1);
+  rc = tiledb_group_open(ctx_, group_deserialized, TILEDB_WRITE);
+  REQUIRE(rc == TILEDB_OK);
+
+  rc = tiledb_group_serialize(ctx_, group, group_deserialized, TILEDB_CAPNP);
+  REQUIRE(rc == TILEDB_OK);
+
+  rc = tiledb_group_close(ctx_, group_deserialized);
+  tiledb_group_free(&group_deserialized);
+
+  // Reopen in read mode
+  rc = tiledb_group_alloc(
+      ctx_, group_deserialized_uri.c_str(), &group_deserialized);
+  REQUIRE(rc == TILEDB_OK);
+  set_group_timestamp(group_deserialized, 1);
+  rc = tiledb_group_open(ctx_, group_deserialized, TILEDB_READ);
+  REQUIRE(rc == TILEDB_OK);
+
+  tiledb_datatype_t dtype;
+  uint32_t num;
+  const void* val;
+  tiledb_group_get_metadata(
+      ctx_, group_deserialized, "testmetadata", &dtype, &num, &val);
+
+  CHECK(*static_cast<const int32_t*>(val) == 123);
+
+  rc = tiledb_group_close(ctx_, group);
+  tiledb_group_free(&group);
+  rc = tiledb_group_close(ctx_, group_deserialized);
+  REQUIRE(rc == TILEDB_OK);
+  tiledb_group_free(&group_deserialized);
+  remove_temp_dir(temp_dir);
+}
 #endif

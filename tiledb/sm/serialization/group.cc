@@ -70,7 +70,7 @@ Status group_metadata_to_capnp(
   auto config_builder = group_metadata_builder->initConfig();
   RETURN_NOT_OK(config_to_capnp(group->config(), &config_builder));
 
-  const Metadata* metadata = group->metadata();
+  const Metadata* metadata = const_cast<Group*>(group)->metadata();
   if (metadata->num()) {
     auto metadata_builder = group_metadata_builder->initMetadata();
     RETURN_NOT_OK(metadata_to_capnp(metadata, &metadata_builder));
@@ -153,7 +153,7 @@ Status group_details_to_capnp(
     }
   }
 
-  const Metadata* metadata = group->metadata();
+  const Metadata* metadata = const_cast<Group*>(group)->metadata();
   if (metadata->num()) {
     auto group_metadata_builder = group_details_builder->initMetadata();
     RETURN_NOT_OK(metadata_to_capnp(metadata, &group_metadata_builder));
