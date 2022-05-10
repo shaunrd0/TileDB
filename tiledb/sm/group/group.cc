@@ -441,13 +441,7 @@ Metadata* Group::unsafe_metadata() {
   return &metadata_;
 }
 
-const Metadata* Group::metadata() {
-  if (query_type_ == QueryType::READ && !metadata_loaded_) {
-    if (!load_metadata().ok()) {
-      return &metadata_;
-    }
-  }
-
+const Metadata* Group::metadata() const {
   return &metadata_;
 }
 
