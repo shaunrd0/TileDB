@@ -121,6 +121,37 @@ Subarray::Subarray(
   add_default_ranges();
 }
 
+Subarray::Subarray(
+    const Array* array,
+    Layout layout,
+    stats::Stats* stats,
+    shared_ptr<Logger> logger,
+    std::vector<std::vector<Range>>& ranges,
+    std::vector<bool>&& is_default,
+    std::vector<unsigned>&& relevant_fragments)
+    : stats_(stats)
+    , logger_(logger->clone("Subarray", ++logger_id_))
+    , array_(array)
+    , layout_(layout)
+    , cell_order_(array_->array_schema_latest().cell_order())
+    , is_default_(is_default)
+    , est_result_size_computed_(false)
+    , relevant_fragments_(relevant_fragments)
+    , coalesce_ranges_(false)
+    , ranges_sorted_(false) {
+  const auto dim_num = array_->array_schema_latest().dim_num();
+  for (uint32_t i = 0; i < dim_num; i++) {
+    auto dim{array_->array_schema_latest().dimension_ptr(i)};
+    range_subset_.emplace_back(
+        dim->type(), dim->domain(), is_default[i], false);
+    if (!is_default[i]) {
+      for (const auto& range : ranges[i]) {
+        range_subset_[i].add_range_unrestricted(range);
+      }
+    }
+  }
+}
+
 Subarray::Subarray(const Subarray& subarray)
     : Subarray() {
   // Make a deep-copy clone
@@ -154,6 +185,18 @@ Subarray& Subarray::operator=(Subarray&& subarray) noexcept {
 /* ****************************** */
 /*               API              */
 /* ****************************** */
+
+#ifdef TILEDB_SERIALIZATION
+serialization::SerializableSubarray Subarray::serializable_subarray() const {
+  return serialization::SerializableSubarray(
+      layout_,
+      array_->array_schema_latest(),
+      range_subset_,
+      is_default_,
+      relevant_fragments_,
+      stats_);
+}
+#endif
 
 void Subarray::add_label_range(
     const DimensionLabelReference& dim_label_ref,
@@ -1050,15 +1093,6 @@ bool Subarray::is_unary(uint64_t range_idx) const {
   return true;
 }
 
-void Subarray::set_is_default(uint32_t dim_index, bool is_default) {
-  if (is_default) {
-    auto dim{array_->array_schema_latest().dimension_ptr(dim_index)};
-    range_subset_.at(dim_index) = RangeSetAndSuperset(
-        dim->type(), dim->domain(), is_default, coalesce_ranges_);
-  }
-  is_default_[dim_index] = is_default;
-}
-
 void Subarray::set_layout(Layout layout) {
   layout_ = layout;
 }
@@ -1459,8 +1493,9 @@ Status Subarray::get_max_memory_size(
 
   // Check if the attribute/dimension is fixed-sized
   if (name != constants::coords && array_schema.var_size(name)) {
-    return logger_->status(Status_SubarrayError(
-        "Cannot get max memory size; Attribute/Dimension must be fixed-sized"));
+    return logger_->status(
+        Status_SubarrayError("Cannot get max memory size; "
+                             "Attribute/Dimension must be fixed-sized"));
   }
 
   // Check if attribute/dimension is nullable
@@ -1762,20 +1797,6 @@ void Subarray::set_attribute_ranges(
         attr_name + "'."));
   }
   attr_range_subset_[attr_name] = ranges;
-}
-
-Status Subarray::set_ranges_for_dim(
-    uint32_t dim_idx, const std::vector<Range>& ranges) {
-  auto dim{array_->array_schema_latest().dimension_ptr(dim_idx)};
-  range_subset_[dim_idx] =
-      RangeSetAndSuperset(dim->type(), dim->domain(), false, coalesce_ranges_);
-  is_default_[dim_idx] = false;
-  // Add each range individually so that contiguous
-  // ranges may be coalesced.
-  for (const auto& range : ranges)
-    range_subset_[dim_idx].add_range_unrestricted(range);
-  is_default_[dim_idx] = range_subset_[dim_idx].is_implicitly_initialized();
-  return Status::Ok();
 }
 
 Status Subarray::split(
@@ -3198,10 +3219,6 @@ Status Subarray::load_relevant_fragment_tile_var_sizes(
 }
 
 const std::vector<unsigned>* Subarray::relevant_fragments() const {
-  return &relevant_fragments_;
-}
-
-std::vector<unsigned>* Subarray::relevant_fragments() {
   return &relevant_fragments_;
 }
 

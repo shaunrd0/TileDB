@@ -41,6 +41,8 @@
 #include "tiledb/sm/serialization/array.h"
 #include "tiledb/sm/serialization/array_schema.h"
 #include "tiledb/sm/serialization/capnp_utils.h"
+#include "tiledb/sm/serialization/serializable_stats.h"
+#include "tiledb/sm/serialization/serializable_subarray.h"
 #endif
 // clang-format on
 
@@ -84,178 +86,13 @@ enum class SerializationContext { CLIENT, SERVER, BACKUP };
 
 shared_ptr<Logger> dummy_logger = make_shared<Logger>(HERE(), "");
 
-Status stats_to_capnp(Stats& stats, capnp::Stats::Builder* stats_builder) {
-  // Build counters
-  const auto counters = stats.counters();
-  if (counters != nullptr && !counters->empty()) {
-    auto counters_builder = stats_builder->initCounters();
-    auto entries_builder = counters_builder.initEntries(counters->size());
-    uint64_t index = 0;
-    for (const auto& entry : *counters) {
-      entries_builder[index].setKey(entry.first);
-      entries_builder[index].setValue(entry.second);
-      ++index;
-    }
-  }
-
-  // Build timers
-  const auto timers = stats.timers();
-  if (timers != nullptr && !timers->empty()) {
-    auto timers_builder = stats_builder->initTimers();
-    auto entries_builder = timers_builder.initEntries(timers->size());
-    uint64_t index = 0;
-    for (const auto& entry : *timers) {
-      entries_builder[index].setKey(entry.first);
-      entries_builder[index].setValue(entry.second);
-      ++index;
-    }
-  }
-
-  return Status::Ok();
-}
-
-Status stats_from_capnp(
-    const capnp::Stats::Reader& stats_reader, Stats* stats) {
-  if (stats_reader.hasCounters()) {
-    auto counters = stats->counters();
-    auto counters_reader = stats_reader.getCounters();
-    for (const auto entry : counters_reader.getEntries()) {
-      (*counters)[std::string(entry.getKey().cStr())] = entry.getValue();
-    }
-  }
-
-  if (stats_reader.hasTimers()) {
-    auto timers = stats->timers();
-    auto timers_reader = stats_reader.getTimers();
-    for (const auto entry : timers_reader.getEntries()) {
-      (*timers)[std::string(entry.getKey().cStr())] = entry.getValue();
-    }
-  }
-
-  return Status::Ok();
-}
-
-Status subarray_to_capnp(
-    const ArraySchema& schema,
-    const Subarray* subarray,
-    capnp::Subarray::Builder* builder) {
-  builder->setLayout(layout_str(subarray->layout()));
-
-  const uint32_t dim_num = subarray->dim_num();
-  auto ranges_builder = builder->initRanges(dim_num);
-  for (uint32_t i = 0; i < dim_num; i++) {
-    const auto datatype{schema.dimension_ptr(i)->type()};
-    auto range_builder = ranges_builder[i];
-    const auto& ranges = subarray->ranges_for_dim(i);
-    range_builder.setType(datatype_str(datatype));
-
-    range_builder.setHasDefaultRange(subarray->is_default(i));
-    auto range_sizes = range_builder.initBufferSizes(ranges.size());
-    auto range_start_sizes = range_builder.initBufferStartSizes(ranges.size());
-    // This will copy all of the ranges into one large byte vector
-    // Future improvement is to do this in a zero copy manner
-    // (kj::ArrayBuilder?)
-    auto capnpVector = kj::Vector<uint8_t>();
-    uint64_t range_idx = 0;
-    for (auto& range : ranges) {
-      capnpVector.addAll(kj::ArrayPtr<uint8_t>(
-          const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(range.data())),
-          range.size()));
-      range_sizes.set(range_idx, range.size());
-      range_start_sizes.set(range_idx, range.start_size());
-      ++range_idx;
-    }
-    range_builder.setBuffer(capnpVector.asPtr());
-  }
-
-  // If stats object exists set its cap'n proto object
-  stats::Stats* stats = subarray->stats();
-  if (stats != nullptr) {
-    auto stats_builder = builder->initStats();
-    RETURN_NOT_OK(stats_to_capnp(*stats, &stats_builder));
-  }
-
-  if (subarray->relevant_fragments()->size() > 0) {
-    auto relevant_fragments_builder =
-        builder->initRelevantFragments(subarray->relevant_fragments()->size());
-    for (size_t i = 0; i < subarray->relevant_fragments()->size(); ++i) {
-      relevant_fragments_builder.set(i, subarray->relevant_fragments()->at(i));
-    }
-  }
-
-  return Status::Ok();
-}
-
-Status subarray_from_capnp(
-    const capnp::Subarray::Reader& reader, Subarray* subarray) {
-  auto ranges_reader = reader.getRanges();
-  uint32_t dim_num = ranges_reader.size();
-  for (uint32_t i = 0; i < dim_num; i++) {
-    auto range_reader = ranges_reader[i];
-    Datatype type = Datatype::UINT8;
-    RETURN_NOT_OK(datatype_enum(range_reader.getType(), &type));
-
-    auto data = range_reader.getBuffer();
-    auto data_ptr = data.asBytes();
-    if (range_reader.hasBufferSizes()) {
-      auto buffer_sizes = range_reader.getBufferSizes();
-      auto buffer_start_sizes = range_reader.getBufferStartSizes();
-      size_t range_count = buffer_sizes.size();
-      std::vector<Range> ranges(range_count);
-      uint64_t offset = 0;
-      for (size_t j = 0; j < range_count; j++) {
-        uint64_t range_size = buffer_sizes[j];
-        uint64_t range_start_size = buffer_start_sizes[j];
-        if (range_start_size != 0) {
-          ranges[j] =
-              Range(data_ptr.begin() + offset, range_size, range_start_size);
-        } else {
-          ranges[j] = Range(data_ptr.begin() + offset, range_size);
-        }
-        offset += range_size;
-      }
-
-      RETURN_NOT_OK(subarray->set_ranges_for_dim(i, ranges));
-
-      // Set default indicator
-      subarray->set_is_default(i, range_reader.getHasDefaultRange());
-    } else {
-      // Handle 1.7 style ranges where there is a single range with no sizes
-      Range range(data_ptr.begin(), data.size());
-      RETURN_NOT_OK(subarray->set_ranges_for_dim(i, {range}));
-      subarray->set_is_default(i, range_reader.getHasDefaultRange());
-    }
-  }
-
-  // If cap'n proto object has stats set it on c++ object
-  if (reader.hasStats()) {
-    stats::Stats* stats = subarray->stats();
-    // We should always have a stats here
-    if (stats != nullptr) {
-      RETURN_NOT_OK(stats_from_capnp(reader.getStats(), stats));
-    }
-  }
-
-  if (reader.hasRelevantFragments()) {
-    auto relevant_fragments = reader.getRelevantFragments();
-    size_t count = relevant_fragments.size();
-    subarray->relevant_fragments()->reserve(count);
-    for (size_t i = 0; i < count; i++) {
-      subarray->relevant_fragments()->emplace_back(relevant_fragments[i]);
-    }
-  }
-
-  return Status::Ok();
-}
-
 Status subarray_partitioner_to_capnp(
     const ArraySchema& schema,
     const SubarrayPartitioner& partitioner,
     capnp::SubarrayPartitioner::Builder* builder) {
   // Subarray
   auto subarray_builder = builder->initSubarray();
-  RETURN_NOT_OK(
-      subarray_to_capnp(schema, &partitioner.subarray(), &subarray_builder));
+  partitioner.subarray().serializable_subarray().to_capnp(subarray_builder);
 
   // Per-attr/dim mem budgets
   const auto* budgets = partitioner.get_result_budgets();
@@ -288,8 +125,8 @@ Status subarray_partitioner_to_capnp(
   if (partition_info->partition_.array() != nullptr) {
     auto info_builder = builder->initCurrent();
     auto info_subarray_builder = info_builder.initSubarray();
-    RETURN_NOT_OK(subarray_to_capnp(
-        schema, &partition_info->partition_, &info_subarray_builder));
+    partition_info->partition_.serializable_subarray().to_capnp(
+        info_subarray_builder);
     info_builder.setStart(partition_info->start_);
     info_builder.setEnd(partition_info->end_);
     info_builder.setSplitMultiRange(partition_info->split_multi_range_);
@@ -305,7 +142,7 @@ Status subarray_partitioner_to_capnp(
   size_t sr_idx = 0;
   for (const auto& subarray : state->single_range_) {
     auto b = single_range_builder[sr_idx];
-    RETURN_NOT_OK(subarray_to_capnp(schema, &subarray, &b));
+    subarray.serializable_subarray().to_capnp(b);
     sr_idx++;
   }
   auto multi_range_builder =
@@ -313,7 +150,7 @@ Status subarray_partitioner_to_capnp(
   size_t m_idx = 0;
   for (const auto& subarray : state->multi_range_) {
     auto b = multi_range_builder[m_idx];
-    RETURN_NOT_OK(subarray_to_capnp(schema, &subarray, &b));
+    subarray.serializable_subarray().to_capnp(b);
     m_idx++;
   }
 
@@ -329,7 +166,7 @@ Status subarray_partitioner_to_capnp(
   stats::Stats* stats = partitioner.stats();
   if (stats != nullptr) {
     auto stats_builder = builder->initStats();
-    RETURN_NOT_OK(stats_to_capnp(*stats, &stats_builder));
+    stats->serializable_stats().to_capnp(stats_builder);
   }
 
   return Status::Ok();
@@ -359,8 +196,8 @@ Status subarray_partitioner_from_capnp(
   RETURN_NOT_OK(layout_enum(subarray_reader.getLayout(), &layout));
 
   // Subarray, which is used to initialize the partitioner.
-  Subarray subarray(array, layout, query_stats, dummy_logger, false);
-  RETURN_NOT_OK(subarray_from_capnp(reader.getSubarray(), &subarray));
+  auto subarray = SerializableSubarray::from_capnp(
+      array, query_stats, layout, reader.getSubarray());
   *partitioner = SubarrayPartitioner(
       config,
       subarray,
@@ -417,10 +254,8 @@ Status subarray_partitioner_from_capnp(
     partition_info->end_ = partition_info_reader.getEnd();
     partition_info->split_multi_range_ =
         partition_info_reader.getSplitMultiRange();
-    partition_info->partition_ =
-        Subarray(array, layout, query_stats, dummy_logger, false);
-    RETURN_NOT_OK(subarray_from_capnp(
-        partition_info_reader.getSubarray(), &partition_info->partition_));
+    partition_info->partition_ = SerializableSubarray::from_capnp(
+        array, query_stats, layout, reader.getSubarray());
 
     if (compute_current_tile_overlap) {
       partition_info->partition_.precompute_tile_overlap(
@@ -441,19 +276,15 @@ Status subarray_partitioner_from_capnp(
   const unsigned num_sr = sr_reader.size();
   for (unsigned i = 0; i < num_sr; i++) {
     auto subarray_reader_ = sr_reader[i];
-    state->single_range_.emplace_back(
-        array, layout, query_stats, dummy_logger, false);
-    Subarray& subarray_ = state->single_range_.back();
-    RETURN_NOT_OK(subarray_from_capnp(subarray_reader_, &subarray_));
+    state->single_range_.emplace_back(SerializableSubarray::from_capnp(
+        array, query_stats, layout, subarray_reader_));
   }
   auto m_reader = state_reader.getMultiRange();
   const unsigned num_m = m_reader.size();
   for (unsigned i = 0; i < num_m; i++) {
     auto subarray_reader_ = m_reader[i];
-    state->multi_range_.emplace_back(
-        array, layout, query_stats, dummy_logger, false);
-    Subarray& subarray_ = state->multi_range_.back();
-    RETURN_NOT_OK(subarray_from_capnp(subarray_reader_, &subarray_));
+    state->multi_range_.emplace_back(SerializableSubarray::from_capnp(
+        array, query_stats, layout, subarray_reader_));
   }
 
   // Overall mem budget
@@ -467,7 +298,7 @@ Status subarray_partitioner_from_capnp(
     auto stats = partitioner->stats();
     // We should always have stats
     if (stats != nullptr) {
-      RETURN_NOT_OK(stats_from_capnp(reader.getStats(), stats));
+      stats_from_capnp(reader.getStats(), stats);
     }
   }
 
@@ -785,8 +616,7 @@ Status reader_to_capnp(
 
   // Subarray
   auto subarray_builder = reader_builder->initSubarray();
-  RETURN_NOT_OK(
-      subarray_to_capnp(array_schema, query.subarray(), &subarray_builder));
+  query.subarray()->serializable_subarray().to_capnp(subarray_builder);
 
   // Read state
   RETURN_NOT_OK(read_state_to_capnp(array_schema, reader, reader_builder));
@@ -801,7 +631,7 @@ Status reader_to_capnp(
   stats::Stats* stats = reader.stats();
   if (stats != nullptr) {
     auto stats_builder = reader_builder->initStats();
-    RETURN_NOT_OK(stats_to_capnp(*stats, &stats_builder));
+    stats->serializable_stats().to_capnp(stats_builder);
   }
 
   return Status::Ok();
@@ -811,16 +641,13 @@ Status index_reader_to_capnp(
     const Query& query,
     const SparseIndexReaderBase& reader,
     capnp::ReaderIndex::Builder* reader_builder) {
-  const auto& array_schema = query.array_schema();
-
   // Subarray layout
   const auto& layout = layout_str(query.layout());
   reader_builder->setLayout(layout);
 
   // Subarray
   auto subarray_builder = reader_builder->initSubarray();
-  RETURN_NOT_OK(
-      subarray_to_capnp(array_schema, query.subarray(), &subarray_builder));
+  query.subarray()->serializable_subarray().to_capnp(subarray_builder);
 
   // Read state
   RETURN_NOT_OK(index_read_state_to_capnp(reader.read_state(), reader_builder));
@@ -835,7 +662,7 @@ Status index_reader_to_capnp(
   stats::Stats* stats = reader.stats();
   if (stats != nullptr) {
     auto stats_builder = reader_builder->initStats();
-    RETURN_NOT_OK(stats_to_capnp(*stats, &stats_builder));
+    stats->serializable_stats().to_capnp(stats_builder);
   }
 
   return Status::Ok();
@@ -853,8 +680,7 @@ Status dense_reader_to_capnp(
 
   // Subarray
   auto subarray_builder = reader_builder->initSubarray();
-  RETURN_NOT_OK(
-      subarray_to_capnp(array_schema, query.subarray(), &subarray_builder));
+  query.subarray()->serializable_subarray().to_capnp(subarray_builder);
 
   // Read state
   RETURN_NOT_OK(
@@ -870,7 +696,7 @@ Status dense_reader_to_capnp(
   stats::Stats* stats = reader.stats();
   if (stats != nullptr) {
     auto stats_builder = reader_builder->initStats();
-    RETURN_NOT_OK(stats_to_capnp(*stats, &stats_builder));
+    stats->serializable_stats().to_capnp(stats_builder);
   }
 
   return Status::Ok();
@@ -986,9 +812,9 @@ Status reader_from_capnp(
   RETURN_NOT_OK(layout_enum(reader_reader.getLayout(), &layout));
 
   // Subarray
-  Subarray subarray(array, layout, query->stats(), dummy_logger, false);
   auto subarray_reader = reader_reader.getSubarray();
-  RETURN_NOT_OK(subarray_from_capnp(subarray_reader, &subarray));
+  Subarray subarray = SerializableSubarray::from_capnp(
+      array, query->stats(), layout, subarray_reader);
   RETURN_NOT_OK(query->set_subarray_unsafe(subarray));
 
   // Read state
@@ -1009,7 +835,7 @@ Status reader_from_capnp(
     stats::Stats* stats = reader->stats();
     // We should always have a stats here
     if (stats != nullptr) {
-      RETURN_NOT_OK(stats_from_capnp(reader_reader.getStats(), stats));
+      stats_from_capnp(reader_reader.getStats(), stats);
     }
   }
 
@@ -1028,9 +854,9 @@ Status index_reader_from_capnp(
   RETURN_NOT_OK(layout_enum(reader_reader.getLayout(), &layout));
 
   // Subarray
-  Subarray subarray(array, layout, query->stats(), dummy_logger, false);
   auto subarray_reader = reader_reader.getSubarray();
-  RETURN_NOT_OK(subarray_from_capnp(subarray_reader, &subarray));
+  Subarray subarray = SerializableSubarray::from_capnp(
+      array, query->stats(), layout, subarray_reader);
   RETURN_NOT_OK(query->set_subarray_unsafe(subarray));
 
   // Read state
@@ -1051,7 +877,7 @@ Status index_reader_from_capnp(
     stats::Stats* stats = reader->stats();
     // We should always have a stats here
     if (stats != nullptr) {
-      RETURN_NOT_OK(stats_from_capnp(reader_reader.getStats(), stats));
+      stats_from_capnp(reader_reader.getStats(), stats);
     }
   }
 
@@ -1071,9 +897,9 @@ Status dense_reader_from_capnp(
   RETURN_NOT_OK(layout_enum(reader_reader.getLayout(), &layout));
 
   // Subarray
-  Subarray subarray(array, layout, query->stats(), dummy_logger, false);
   auto subarray_reader = reader_reader.getSubarray();
-  RETURN_NOT_OK(subarray_from_capnp(subarray_reader, &subarray));
+  Subarray subarray = SerializableSubarray::from_capnp(
+      array, query->stats(), layout, subarray_reader);
   RETURN_NOT_OK(query->set_subarray_unsafe(subarray));
 
   // Read state
@@ -1094,7 +920,7 @@ Status dense_reader_from_capnp(
     stats::Stats* stats = reader->stats();
     // We should always have a stats here
     if (stats != nullptr) {
-      RETURN_NOT_OK(stats_from_capnp(reader_reader.getStats(), stats));
+      stats_from_capnp(reader_reader.getStats(), stats);
     }
   }
 
@@ -1118,7 +944,7 @@ Status delete_from_capnp(
     stats::Stats* stats = delete_strategy->stats();
     // We should always have a stats here
     if (stats != nullptr) {
-      RETURN_NOT_OK(stats_from_capnp(delete_reader.getStats(), stats));
+      stats_from_capnp(delete_reader.getStats(), stats);
     }
   }
 
@@ -1139,7 +965,7 @@ Status delete_to_capnp(
   stats::Stats* stats = delete_strategy.stats();
   if (stats != nullptr) {
     auto stats_builder = delete_builder->initStats();
-    RETURN_NOT_OK(stats_to_capnp(*stats, &stats_builder));
+    stats->serializable_stats().to_capnp(stats_builder);
   }
 
   return Status::Ok();
@@ -1167,15 +993,14 @@ Status writer_to_capnp(
   const auto subarray_ranges = query.subarray();
   if (!subarray_ranges->empty()) {
     auto subarray_builder = writer_builder->initSubarrayRanges();
-    RETURN_NOT_OK(
-        subarray_to_capnp(array_schema, subarray_ranges, &subarray_builder));
+    subarray_ranges->serializable_subarray().to_capnp(subarray_builder);
   }
 
   // If stats object exists set its cap'n proto object
   stats::Stats* stats = writer.stats();
   if (stats != nullptr) {
     auto stats_builder = writer_builder->initStats();
-    RETURN_NOT_OK(stats_to_capnp(*stats, &stats_builder));
+    stats->serializable_stats().to_capnp(stats_builder);
   }
 
   return Status::Ok();
@@ -1192,7 +1017,7 @@ Status writer_from_capnp(
     stats::Stats* stats = writer->stats();
     // We should always have a stats here
     if (stats != nullptr) {
-      RETURN_NOT_OK(stats_from_capnp(writer_reader.getStats(), stats));
+      stats_from_capnp(writer_reader.getStats(), stats);
     }
   }
 
@@ -1346,7 +1171,7 @@ Status query_to_capnp(
   stats::Stats* stats = query.stats();
   if (stats != nullptr) {
     auto stats_builder = query_builder->initStats();
-    RETURN_NOT_OK(stats_to_capnp(*stats, &stats_builder));
+    stats->serializable_stats().to_capnp(stats_builder);
   }
 
   return Status::Ok();
@@ -1912,9 +1737,9 @@ Status query_from_capnp(
 
       // Subarray
       if (writer_reader.hasSubarrayRanges()) {
-        Subarray subarray(array, layout, query->stats(), dummy_logger, false);
         auto subarray_reader = writer_reader.getSubarrayRanges();
-        RETURN_NOT_OK(subarray_from_capnp(subarray_reader, &subarray));
+        Subarray subarray = SerializableSubarray::from_capnp(
+            array, query->stats(), layout, subarray_reader);
         RETURN_NOT_OK(query->set_subarray_unsafe(subarray));
       }
     }
@@ -1936,7 +1761,7 @@ Status query_from_capnp(
     stats::Stats* stats = query->stats();
     // We should always have a stats here
     if (stats != nullptr) {
-      RETURN_NOT_OK(stats_from_capnp(query_reader.getStats(), stats));
+      stats_from_capnp(query_reader.getStats(), stats);
     }
   }
 

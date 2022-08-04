@@ -47,6 +47,10 @@
 #include "tiledb/sm/subarray/range_subset.h"
 #include "tiledb/sm/subarray/subarray_tile_overlap.h"
 
+#ifdef TILEDB_SERIALIZATION
+#include "tiledb/sm/serialization/serializable_subarray.h"
+#endif
+
 #include <cmath>
 #include <iostream>
 #include <map>
@@ -214,6 +218,28 @@ class Subarray {
       StorageManager* storage_manager = nullptr);
 
   /**
+   * Constructor, used by serialization.
+   *
+   * @param array The array the subarray is associated with.
+   * @param layout The layout of the values of the subarray (of the results
+   *     if the subarray is used for reads, or of the values provided
+   *     by the user for writes).
+   * @param stats The stats.
+   * @param logger The parent logger to clone and use for logging
+   * @param ranges The ranges for this subarray, per dimensions
+   * @param is_default Are the ranges for a dimension default or not
+   * @param relevant_fragments The relevant fragments
+   */
+  Subarray(
+      const Array* array,
+      Layout layout,
+      stats::Stats* stats,
+      shared_ptr<Logger> logger,
+      std::vector<std::vector<Range>>& ranges,
+      std::vector<bool>&& is_default,
+      std::vector<unsigned>&& relevant_fragments);
+
+  /**
    * Copy constructor. This performs a deep copy (including memcpy of
    * underlying buffers).
    */
@@ -237,6 +263,10 @@ class Subarray {
   /* ********************************* */
   /*                 API               */
   /* ********************************* */
+
+#ifdef TILEDB_SERIALIZATION
+  serialization::SerializableSubarray serializable_subarray() const;
+#endif
 
   /** Sets config for query-level parameters only. */
   Status set_config(const Config& config);
@@ -849,13 +879,6 @@ class Subarray {
    */
   Subarray get_subarray(uint64_t start, uint64_t end) const;
 
-  /**
-   * Set default indicator for dimension subarray. Used by serialization only
-   * @param dim_index
-   * @param is_default
-   */
-  void set_is_default(uint32_t dim_index, bool is_default);
-
   /** Sets the subarray layout. */
   void set_layout(Layout layout);
 
@@ -919,18 +942,6 @@ class Subarray {
    */
   void set_attribute_ranges(
       const std::string& attr_name, const std::vector<Range>& ranges);
-
-  /**
-   * Directly sets the `Range` vector for the given dimension index, making
-   * a deep copy.
-   *
-   * @param dim_idx Index of dimension to set
-   * @param ranges `Range` vector that will be copied and set
-   * @return Status
-   *
-   * @note Intended for serialization only
-   */
-  Status set_ranges_for_dim(uint32_t dim_idx, const std::vector<Range>& ranges);
 
   /**
    * Splits the subarray along the splitting dimension and value into
@@ -1055,11 +1066,6 @@ class Subarray {
    * Return relevant fragments as computed
    */
   const std::vector<unsigned>* relevant_fragments() const;
-
-  /**
-   * Return relevant fragments as computed
-   */
-  std::vector<unsigned>* relevant_fragments();
 
   /**
    * For flattened ("total order") start/end range indexes,

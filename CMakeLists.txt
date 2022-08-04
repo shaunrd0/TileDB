@@ -442,9 +442,11 @@ if (TILEDB_TESTS)
   add_dependencies(tests unit_delete_update_condition)
   add_dependencies(tests unit_ast)
   add_dependencies(tests unit_serializers)
-
   if (TILEDB_CRC32)
     add_dependencies(tests unit_link_crc32)
+  endif()
+  if (TILEDB_SERIALIZATION)
+  add_dependencies(tests unit_serialization)
   endif()
 
   if (TILEDB_WEBP)

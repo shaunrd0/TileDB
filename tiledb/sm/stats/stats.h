@@ -35,6 +35,10 @@
 
 #include "tiledb/common/scoped_executor.h"
 
+#ifdef TILEDB_SERIALIZATION
+#include "tiledb/sm/serialization/serializable_stats.h"
+#endif
+
 #include <inttypes.h>
 #include <chrono>
 #include <iomanip>
@@ -64,9 +68,20 @@ class Stats {
    * Value constructor.
    *
    * @param prefix The stat name prefix.
-   * @param parent If non-null, stats will be added to this instance.
    */
   Stats(const std::string& prefix);
+
+  /**
+   * Constructor, used in serialization.
+   *
+   * @param prefix The stat name prefix.
+   * @param timers The existing timers.
+   * @param counters The existing counters.
+   */
+  Stats(
+      const std::string& prefix,
+      std::unordered_map<std::string, double>&& timers,
+      std::unordered_map<std::string, uint64_t>&& counters);
 
   /** Destructor. */
   ~Stats() = default;
@@ -74,6 +89,10 @@ class Stats {
   /* ****************************** */
   /*              API               */
   /* ****************************** */
+
+#ifdef TILEDB_SERIALIZATION
+  serialization::SerializableStats serializable_stats() const;
+#endif
 
   /**
    * Starts a timer for the input timer stat. The timer
@@ -107,6 +126,17 @@ class Stats {
 
   /** Creates a child instance, managed by this instance. */
   Stats* create_child(const std::string& prefix);
+
+  /**
+   * Creates a child instance, managed by this instance, used by serialization.
+   *
+   * @param timers The existing timers.
+   * @param counters The existing counters.
+   */
+  Stats* create_child(
+      const std::string& prefix,
+      std::unordered_map<std::string, double>&& timers,
+      std::unordered_map<std::string, uint64_t>&& counters);
 
   /** Return pointer to timers map, used for serialization only. */
   std::unordered_map<std::string, double>* timers();

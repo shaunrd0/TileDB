@@ -53,9 +53,26 @@ Stats::Stats(const std::string& prefix)
     , parent_(nullptr) {
 }
 
+Stats::Stats(
+    const std::string& prefix,
+    std::unordered_map<std::string, double>&& timers,
+    std::unordered_map<std::string, uint64_t>&& counters)
+    : enabled_(true)
+    , timers_(timers)
+    , counters_(counters)
+    , prefix_(prefix + ".")
+    , parent_(nullptr) {
+}
+
 /* ****************************** */
 /*              API               */
 /* ****************************** */
+
+#ifdef TILEDB_SERIALIZATION
+serialization::SerializableStats Stats::serializable_stats() const {
+  return serialization::SerializableStats(timers_, counters_);
+}
+#endif
 
 bool Stats::enabled() const {
   return enabled_;
@@ -270,6 +287,17 @@ Stats* Stats::create_child(const std::string& prefix) {
   child->parent_ = this;
   return child;
 }
+
+Stats* Stats::create_child(
+    const std::string& prefix,
+    std::unordered_map<std::string, double>&& timers,
+    std::unordered_map<std::string, uint64_t>&& counters) {
+  std::unique_lock<std::mutex> lck(mtx_);
+  children_.emplace_back(prefix_ + prefix, move(timers), move(counters));
+  Stats* const child = &children_.back();
+  child->parent_ = this;
+  return child;
+}  // namespace stats
 
 void Stats::populate_flattened_stats(
     std::unordered_map<std::string, double>* const flattened_timers,
