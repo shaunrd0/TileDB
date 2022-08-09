@@ -742,7 +742,8 @@ Status VFS::init(
     ThreadPool* const compute_tp,
     ThreadPool* const io_tp,
     const Config* const ctx_config,
-    const Config* const vfs_config) {
+    const Config* const vfs_config,
+    shared_ptr<MemFilesystem::FSNode> memfs_root) {
   stats_ = parent_stats->create_child("VFS");
 
   assert(compute_tp);
@@ -801,6 +802,10 @@ Status VFS::init(
 #else
   posix_.init(config_, io_tp_);
 #endif
+
+  if (memfs_root != nullptr) {
+    memfs_.init(memfs_root);
+  }
 
   init_ = true;
 

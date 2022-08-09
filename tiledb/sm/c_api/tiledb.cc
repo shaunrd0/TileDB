@@ -5101,10 +5101,12 @@ int32_t tiledb_vfs_alloc(
   auto io_tp = ctx->storage_manager()->io_tp();
   auto vfs_config = config ? config->config_ : nullptr;
   auto ctx_config = ctx->storage_manager()->config();
+  auto memfs_root(ctx->storage_manager()->vfs()->memfs_root());
+
   if (SAVE_ERROR_CATCH(
           ctx,
           (*vfs)->vfs_->init(
-              stats, compute_tp, io_tp, &ctx_config, vfs_config))) {
+              stats, compute_tp, io_tp, &ctx_config, vfs_config, memfs_root))) {
     delete (*vfs)->vfs_;
     delete vfs;
     return TILEDB_ERR;

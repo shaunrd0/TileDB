@@ -252,6 +252,7 @@ class VFS {
    *
    * @param parent_stats The parent stats to inherit from.
    * @param config Configuration parameters
+   * @param memfs_root Optional MemFS directory tree root.
    * @return Status
    */
   Status init(
@@ -259,7 +260,8 @@ class VFS {
       ThreadPool* compute_tp,
       ThreadPool* io_tp,
       const Config* ctx_config,
-      const Config* vfs_config);
+      const Config* vfs_config,
+      shared_ptr<MemFilesystem::FSNode> memfs_root = nullptr);
 
   /**
    * Terminates the virtual system. Must only be called if init() returned
@@ -323,6 +325,11 @@ class VFS {
    * @return Status
    */
   Status copy_dir(const URI& old_uri, const URI& new_uri);
+
+  /** Returns the root of the in-memory filesystem's directory tree. */
+  inline shared_ptr<MemFilesystem::FSNode> memfs_root() {
+    return memfs_.root();
+  }
 
   /**
    * Reads from a file.
