@@ -58,8 +58,9 @@ namespace sm {
 /*     CONSTRUCTORS & DESTRUCTORS    */
 /* ********************************* */
 
-VFS::VFS()
+VFS::VFS(shared_ptr<MemFilesystem::FSNode> memfs_root)
     : stats_(nullptr)
+    , memfs_{memfs_root}
     , init_(false)
     , read_ahead_size_(0)
     , compute_tp_(nullptr)
@@ -742,8 +743,7 @@ Status VFS::init(
     ThreadPool* const compute_tp,
     ThreadPool* const io_tp,
     const Config* const ctx_config,
-    const Config* const vfs_config,
-    shared_ptr<MemFilesystem::FSNode> memfs_root) {
+    const Config* const vfs_config) {
   stats_ = parent_stats->create_child("VFS");
 
   assert(compute_tp);
@@ -802,10 +802,6 @@ Status VFS::init(
 #else
   posix_.init(config_, io_tp_);
 #endif
-
-  if (memfs_root != nullptr) {
-    memfs_.init(memfs_root);
-  }
 
   init_ = true;
 

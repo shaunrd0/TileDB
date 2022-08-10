@@ -94,7 +94,7 @@ class VFS {
   /* ********************************* */
 
   /** Constructor. */
-  VFS();
+  VFS(shared_ptr<MemFilesystem::FSNode> memfs_root = nullptr);
 
   /** Destructor. */
   ~VFS() = default;
@@ -252,7 +252,6 @@ class VFS {
    *
    * @param parent_stats The parent stats to inherit from.
    * @param config Configuration parameters
-   * @param memfs_root Optional MemFS directory tree root.
    * @return Status
    */
   Status init(
@@ -260,8 +259,7 @@ class VFS {
       ThreadPool* compute_tp,
       ThreadPool* io_tp,
       const Config* ctx_config,
-      const Config* vfs_config,
-      shared_ptr<MemFilesystem::FSNode> memfs_root = nullptr);
+      const Config* vfs_config);
 
   /**
    * Terminates the virtual system. Must only be called if init() returned

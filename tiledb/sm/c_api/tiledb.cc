@@ -5084,7 +5084,8 @@ int32_t tiledb_vfs_alloc(
   }
 
   // Create VFS object
-  (*vfs)->vfs_ = new (std::nothrow) tiledb::sm::VFS();
+  auto memfs_root(ctx->storage_manager()->vfs()->memfs_root());
+  (*vfs)->vfs_ = new (std::nothrow) tiledb::sm::VFS(memfs_root);
   if ((*vfs)->vfs_ == nullptr) {
     auto st =
         Status_Error("Failed to allocate TileDB virtual filesystem object");
@@ -5101,12 +5102,11 @@ int32_t tiledb_vfs_alloc(
   auto io_tp = ctx->storage_manager()->io_tp();
   auto vfs_config = config ? config->config_ : nullptr;
   auto ctx_config = ctx->storage_manager()->config();
-  auto memfs_root(ctx->storage_manager()->vfs()->memfs_root());
 
   if (SAVE_ERROR_CATCH(
           ctx,
           (*vfs)->vfs_->init(
-              stats, compute_tp, io_tp, &ctx_config, vfs_config, memfs_root))) {
+              stats, compute_tp, io_tp, &ctx_config, vfs_config))) {
     delete (*vfs)->vfs_;
     delete vfs;
     return TILEDB_ERR;
