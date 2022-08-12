@@ -58,9 +58,8 @@ namespace sm {
 /*     CONSTRUCTORS & DESTRUCTORS    */
 /* ********************************* */
 
-VFS::VFS(shared_ptr<MemFilesystem::FSNode> memfs_root)
+VFS::VFS()
     : stats_(nullptr)
-    , memfs_{memfs_root}
     , init_(false)
     , read_ahead_size_(0)
     , compute_tp_(nullptr)
