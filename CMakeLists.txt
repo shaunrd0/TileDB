@@ -420,17 +420,24 @@ if (TILEDB_TESTS)
   add_custom_target(tests)
   add_dependencies(tests tiledb_unit)
 
+  # api
+  add_dependencies(tests unit_capi_handle unit_capi_filter)
+  # common
   add_dependencies(tests unit_buffer unit_datum unit_dynamic_memory)
   add_dependencies(tests unit_exception unit_interval unit_thread_pool unit_experimental)
+  # sm
   add_dependencies(tests unit_array_schema unit_filter_create unit_filter_pipeline unit_metadata)
   add_dependencies(tests unit_compressors unit_query unit_misc unit_vfs unit_array)
-  add_dependencies(tests unit_range_subset)
   add_dependencies(tests unit_consistency)
-  add_dependencies(tests unit_range)
-  add_dependencies(tests unit_capi_handle unit_capi_filter)
   add_dependencies(tests unit_delete_condition)
   add_dependencies(tests unit_ast)
+  add_dependencies(tests unit_range_subset)
+  # stdx
+  add_dependencies(tests unit_synchronized_optional)
+  # storage_format
   add_dependencies(tests unit_serializers)
+  # type
+  add_dependencies(tests unit_range)
 
   if (TILEDB_WEBP)
     add_dependencies(tests unit_link_webp)
