@@ -468,15 +468,15 @@ Status Subarray::add_point_ranges(
 
 Status Subarray::add_ranges_list(
     unsigned dim_idx, const void* start, uint64_t count) {
-  if (dim_idx >= this->array_->array_schema_latest().dim_num()){
+  if (dim_idx >= this->array_->array_schema_latest().dim_num()) {
     return LOG_STATUS(
         Status_SubarrayError("Cannot add range; Invalid dimension index"));
   }
 
   if (count % 2) {
-    return LOG_STATUS(Status_SubarrayError("add_ranges_list: Invalid count " 
-        + std::to_string(count)
-        + ", count must be a multiple of 2 "));
+    return LOG_STATUS(Status_SubarrayError(
+        "add_ranges_list: Invalid count " + std::to_string(count) +
+        ", count must be a multiple of 2 "));
   }
 
   QueryType array_query_type{array_->get_query_type()};
@@ -522,8 +522,8 @@ Status Subarray::add_ranges_list(
     uint8_t* ptr = (uint8_t*)start + 2 * coord_size * i;
 
     // Add range
-    auto st = this->add_range(
-        dim_idx, Range(ptr, 2 * coord_size), err_on_range_oob_);
+    auto st =
+        this->add_range(dim_idx, Range(ptr, 2 * coord_size), err_on_range_oob_);
     if (!st.ok()) {
       return LOG_STATUS(std::move(st));
     }
@@ -2107,14 +2107,12 @@ Status Subarray::compute_relevant_fragment_est_result_sizes(
               mem_vec[i].size_validity_ +=
                   tile_size / cell_size * constants::cell_validity_size;
           } else {
-            auto&& [st, tile_var_size] =
-                meta->tile_var_size(names[i], ft.second);
-            RETURN_NOT_OK(st);
+            auto tile_var_size = meta->tile_var_size(names[i], ft.second);
             mem_vec[i].size_fixed_ += tile_size;
-            mem_vec[i].size_var_ += *tile_var_size;
+            mem_vec[i].size_var_ += tile_var_size;
             if (nullable[i])
               mem_vec[i].size_validity_ +=
-                  *tile_var_size / cell_size * constants::cell_validity_size;
+                  tile_var_size / cell_size * constants::cell_validity_size;
           }
         }
       }
@@ -2414,12 +2412,11 @@ Status Subarray::compute_relevant_fragment_est_result_sizes(
                   constants::cell_validity_size;
           } else {
             (*result_sizes)[n].size_fixed_ += tile_size;
-            auto&& [st, tile_var_size] = meta->tile_var_size(names[n], tid);
-            RETURN_NOT_OK(st);
-            (*result_sizes)[n].size_var_ += *tile_var_size;
+            auto tile_var_size = meta->tile_var_size(names[n], tid);
+            (*result_sizes)[n].size_var_ += tile_var_size;
             if (nullable[n])
               (*result_sizes)[n].size_validity_ +=
-                  *tile_var_size / attr_datatype_size *
+                  tile_var_size / attr_datatype_size *
                   constants::cell_validity_size;
           }
         }
@@ -2454,12 +2451,11 @@ Status Subarray::compute_relevant_fragment_est_result_sizes(
 
         } else {
           (*result_sizes)[n].size_fixed_ += tile_size * ratio;
-          auto&& [st, tile_var_size] = meta->tile_var_size(names[n], tid);
-          RETURN_NOT_OK(st);
-          (*result_sizes)[n].size_var_ += *tile_var_size * ratio;
+          auto tile_var_size = meta->tile_var_size(names[n], tid);
+          (*result_sizes)[n].size_var_ += tile_var_size * ratio;
           if (nullable[n])
             (*result_sizes)[n].size_validity_ +=
-                (*tile_var_size / attr_datatype_size *
+                (tile_var_size / attr_datatype_size *
                  constants::cell_validity_size) *
                 ratio;
         }
