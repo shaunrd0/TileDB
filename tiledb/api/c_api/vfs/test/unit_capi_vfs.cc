@@ -1,11 +1,11 @@
 /**
- * @file compile_filesystem_main.cc
+ * @file tiledb/api/c_api/vfs/test/unit_capi_vfs.cc
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2021 TileDB, Inc.
+ * @copyright Copyright (c) 2022 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,14 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
+ *
+ * @section DESCRIPTION
  */
 
-#include "../vfs.h"
+#define CATCH_CONFIG_MAIN
+#include <test/support/tdb_catch.h>
+//#include "../vfs_api_external.h"
+// Disabled until we have a context object library that will allow linking
 
-int main() {
-  static tiledb::sm::stats::Stats stats("test");
-  ThreadPool compute_tp(4);
-  ThreadPool io_tp(4);
-  tiledb::sm::VFS x{&stats, &compute_tp, &io_tp, tiledb::sm::Config{}};
-  return 0;
+TEST_CASE("CAPI VFS: null") {
 }

@@ -1,11 +1,11 @@
 /**
- * @file compile_filesystem_main.cc
+ * @file tiledb/api/c_api/vfs/test/compile_capi_vfs_main.cc
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2021 TileDB, Inc.
+ * @copyright Copyright (c) 2022 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +26,10 @@
  * THE SOFTWARE.
  */
 
-#include "../vfs.h"
+#include "../vfs_api_internal.h"
 
 int main() {
-  static tiledb::sm::stats::Stats stats("test");
-  ThreadPool compute_tp(4);
-  ThreadPool io_tp(4);
-  tiledb::sm::VFS x{&stats, &compute_tp, &io_tp, tiledb::sm::Config{}};
+  (void)sizeof(tiledb_vfs_handle_t);
+  (void)sizeof(tiledb_vfs_fh_handle_t);
   return 0;
 }

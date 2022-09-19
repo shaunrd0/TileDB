@@ -334,6 +334,8 @@ list(APPEND TILEDB_C_API_RELATIVE_HEADERS
     "${CMAKE_SOURCE_DIR}/tiledb/api/c_api/error/error_api_external.h"
     "${CMAKE_SOURCE_DIR}/tiledb/api/c_api/filter/filter_api_enum.h"
     "${CMAKE_SOURCE_DIR}/tiledb/api/c_api/filter/filter_api_external.h"
+    "${CMAKE_SOURCE_DIR}/tiledb/api/c_api/vfs/vfs_api_enum.h"
+    "${CMAKE_SOURCE_DIR}/tiledb/api/c_api/vfs/vfs_api_external.h"
 )
 set(TILEDB_C_API_RELATIVE_HEADER_BASE "${CMAKE_CURRENT_SOURCE_DIR}")
 
@@ -438,7 +440,7 @@ if (TILEDB_TESTS)
   add_dependencies(tests unit_range_subset)
   add_dependencies(tests unit_consistency)
   add_dependencies(tests unit_range)
-  add_dependencies(tests unit_capi_handle unit_capi_filter)
+  add_dependencies(tests unit_capi_handle unit_capi_filter unit_capi_vfs)
   add_dependencies(tests unit_delete_update_condition)
   add_dependencies(tests unit_ast)
   add_dependencies(tests unit_serializers)

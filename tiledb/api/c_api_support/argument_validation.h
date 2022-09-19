@@ -126,7 +126,7 @@ inline void ensure_output_pointer_is_valid(void* p) {
  * @pre `ctx` is valid
  *
  * @param ctx Context
- * @param type_name API name of object typew
+ * @param type_name API name of object type
  */
 inline void action_invalid_object(const std::string& type_name) {
   throw CAPIStatusException(std::string("Invalid TileDB object: ") + type_name);

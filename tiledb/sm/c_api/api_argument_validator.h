@@ -35,6 +35,7 @@
 #define TILEDB_CAPI_HELPERS_H
 
 #include "tiledb/api/c_api/filter/filter_api_internal.h"
+#include "tiledb/api/c_api/vfs/vfs_api_internal.h"
 #include "tiledb/api/c_api_support/argument_validation.h"
 #include "tiledb/common/exception/exception.h"
 #include "tiledb/sm/c_api/tiledb.h"
@@ -249,26 +250,6 @@ inline int32_t sanity_check(
     tiledb_ctx_t* ctx, const tiledb_query_condition_t* cond) {
   if (cond == nullptr || cond->query_condition_ == nullptr) {
     auto st = Status_Error("Invalid TileDB query condition object");
-    LOG_STATUS(st);
-    save_error(ctx, st);
-    return TILEDB_ERR;
-  }
-  return TILEDB_OK;
-}
-
-inline int32_t sanity_check(tiledb_ctx_t* ctx, const tiledb_vfs_t* vfs) {
-  if (vfs == nullptr || vfs->vfs_ == nullptr) {
-    auto st = Status_Error("Invalid TileDB virtual filesystem object");
-    LOG_STATUS(st);
-    save_error(ctx, st);
-    return TILEDB_ERR;
-  }
-  return TILEDB_OK;
-}
-
-inline int32_t sanity_check(tiledb_ctx_t* ctx, const tiledb_vfs_fh_t* fh) {
-  if (fh == nullptr || fh->vfs_fh_ == nullptr) {
-    auto st = Status_Error("Invalid TileDB virtual filesystem file handle");
     LOG_STATUS(st);
     save_error(ctx, st);
     return TILEDB_ERR;

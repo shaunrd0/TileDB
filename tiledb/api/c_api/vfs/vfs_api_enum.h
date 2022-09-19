@@ -1,11 +1,7 @@
-/**
- * @file compile_filesystem_main.cc
- *
- * @section LICENSE
- *
+/*
  * The MIT License
  *
- * @copyright Copyright (c) 2021 TileDB, Inc.
+ * @copyright Copyright (c) 2017-2022 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +22,12 @@
  * THE SOFTWARE.
  */
 
-#include "../vfs.h"
-
-int main() {
-  static tiledb::sm::stats::Stats stats("test");
-  ThreadPool compute_tp(4);
-  ThreadPool io_tp(4);
-  tiledb::sm::VFS x{&stats, &compute_tp, &io_tp, tiledb::sm::Config{}};
-  return 0;
-}
+/** TileDB VFS mode */
+#ifdef TILEDB_VFS_MODE_ENUM
+/** Read mode */
+TILEDB_VFS_MODE_ENUM(VFS_READ) = 0,
+    /** Write mode */
+    TILEDB_VFS_MODE_ENUM(VFS_WRITE) = 1,
+    /** Append mode */
+    TILEDB_VFS_MODE_ENUM(VFS_APPEND) = 2,
+#endif

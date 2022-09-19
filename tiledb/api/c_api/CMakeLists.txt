@@ -60,3 +60,6 @@ add_subdirectory(context)
 
 # `filter`: depends on `context`
 add_subdirectory(filter)
+
+# `vfs`: depends on `config` and `context`
+add_subdirectory(vfs)

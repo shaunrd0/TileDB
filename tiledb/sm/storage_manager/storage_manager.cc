@@ -104,11 +104,6 @@ StorageManager::~StorageManager() {
 
   if (vfs_ != nullptr) {
     cancel_all_tasks();
-    const Status st = vfs_->terminate();
-    if (!st.ok()) {
-      logger_->status(Status_StorageManagerError("Failed to terminate VFS."));
-    }
-
     tdb_delete(vfs_);
   }
 
@@ -1373,13 +1368,12 @@ Status StorageManager::init(const Config& config) {
   tile_cache_ =
       tdb_unique_ptr<BufferLRUCache>(tdb_new(BufferLRUCache, tile_cache_size));
 
-  // GlobalState must be initialized before `vfs->init` because S3::init calls
-  // GetGlobalState
+  // GlobalState must be initialized before initializing the VFS
+  // because S3::init calls GetGlobalState
   auto& global_state = global_state::GlobalState::GetGlobalState();
   RETURN_NOT_OK(global_state.init(config));
 
-  vfs_ = tdb_new(VFS);
-  RETURN_NOT_OK(vfs_->init(stats_, compute_tp_, io_tp_, &config_, nullptr));
+  vfs_ = tdb_new(VFS, stats_, compute_tp_, io_tp_, config_);
 #ifdef TILEDB_SERIALIZATION
   RETURN_NOT_OK(init_rest_client());
 #endif
@@ -1909,7 +1903,6 @@ Status StorageManager::store_group_detail(
   Serializer serializer(tile.data(), tile.size());
   group->serialize(serializer);
 
-
   stats_->add_counter("write_group_size", tile.size());
 
   // Check if the array schema directory exists
@@ -2097,7 +2090,6 @@ tuple<Status, optional<shared_ptr<Group>>> StorageManager::load_group_from_uri(
   Deserializer deserializer(tile.data(), tile.size());
   auto opt_group = Group::deserialize(deserializer, group_uri, this);
   return {Status::Ok(), opt_group};
-
 }
 
 tuple<Status, optional<shared_ptr<Group>>> StorageManager::load_group_details(
