@@ -1,10 +1,10 @@
 #
-# c_api/CMakeLists.txt
+# examples/c_api/experimentalCMakeLists.txt
 #
 #
 # The MIT License
 #
-# Copyright (c) 2018-2021 TileDB, Inc.
+# Copyright (c) 2022 TileDB, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,49 +25,15 @@
 # THE SOFTWARE.
 #
 
-# Use C99 as the standard for these examples.
+# Use C99 as teh standard for these examples
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF) # Don't use GNU extensions
 
-# Add custom target 'examples_c'
-add_custom_target(examples_c DEPENDS tiledb_shared)
-
-if (TILEDB_STATIC)
-  add_custom_target(static_examples_c DEPENDS tiledb_static)
-endif()
-
-# Function that builds an executable per example
-function(build_TileDB_example_capi TARGET)
-  add_executable(${TARGET}_c EXCLUDE_FROM_ALL ${TARGET}.c)
-  target_link_libraries(${TARGET}_c PUBLIC local_install tiledb_shared)
-  if (NOT WIN32)
-    # On Linux, must explicitly link -lpthread -ldl in order for static linking
-    # to libzstd or libcurl to work.
-    target_link_libraries(${TARGET}_c PUBLIC pthread dl)
-  endif()
-  add_dependencies(examples_c ${TARGET}_c)
-endfunction()
-
-function(build_TileDB_static_example_capi TARGET)
-  add_executable(static_${TARGET}_c EXCLUDE_FROM_ALL ${TARGET}.c)
-  target_include_directories(static_${TARGET}_c PUBLIC
-    "${CMAKE_CURRENT_BINARY_DIR}/../"
-  )
-  target_link_libraries(static_${TARGET}_c tiledb_static)
-  if (NOT WIN32)
-    # On Linux, must explicitly link -lpthread -ldl in order for static linking
-    # to libzstd or libcurl to work.
-    target_link_libraries(static_${TARGET}_c pthread dl)
-  endif()
-  add_dependencies(static_examples_c static_${TARGET}_c)
-endfunction()
-
-# Get the example sources
-file(GLOB TILEDB_EXAMPLE_SOURCES_CAPI "*.c")
+file(GLOB TILEDB_EXAMPLE_SOURCES_EXPERIMENTAL_CAPI "*.c")
 
 # Iterate over all example sources and call the build function
-foreach(EXAMPLE_SOURCE ${TILEDB_EXAMPLE_SOURCES_CAPI})
+foreach(EXAMPLE_SOURCE ${TILEDB_EXAMPLE_SOURCES_EXPERIMENTAL_CAPI})
   # Get the binary name
   string(REGEX
     REPLACE "^${CMAKE_CURRENT_SOURCE_DIR}/" ""
@@ -84,8 +50,3 @@ foreach(EXAMPLE_SOURCE ${TILEDB_EXAMPLE_SOURCES_CAPI})
     build_TileDB_static_example_capi(${EXAMPLE_BIN})
   endif()
 endforeach()
-
-
-if ("${TILEDB_EXPERIMENTAL_FEATURES}")
-  add_subdirectory(experimental)
-endif()
