@@ -182,6 +182,27 @@ target_link_libraries(all_filters PUBLIC compression_filter $<TARGET_OBJECTS:com
 target_link_libraries(all_filters PUBLIC encryption_filters $<TARGET_OBJECTS:encryption_filters>)
 target_link_libraries(all_filters PUBLIC float_scaling_filters $<TARGET_OBJECTS:float_scaling_filters>)
 target_link_libraries(all_filters PUBLIC xor_filters $<TARGET_OBJECTS:xor_filters>)
+
+if(TILEDB_WEBP)
+    #
+    # `webp_filters` object library
+    #
+    add_library(webp_filters OBJECT webp_filter.cc)
+    target_link_libraries(webp_filters PUBLIC filter $<TARGET_OBJECTS:filter>)
+    target_link_libraries(webp_filters PUBLIC webp)
+    #
+    # Test-compile of object library ensures link-completeness
+    #
+    add_executable(compile_webp_filters EXCLUDE_FROM_ALL)
+    target_link_libraries(compile_webp_filters PRIVATE webp_filters)
+    target_sources(compile_webp_filters PRIVATE test/compile_webp_filter_main.cc)
+
+    #
+    # Link all_filters target with webp_filters
+    #
+    target_link_libraries(all_filters PUBLIC webp_filters $<TARGET_OBJECTS:webp_filters>)
+endif()
+
 #
 # Test-compile of object library ensures link-completeness
 #
@@ -214,6 +235,10 @@ add_dependencies(all_link_complete compile_filter_pipeline)
 
 
 if (TILEDB_TESTS)
+    if (TILEDB_WEBP)
+        add_definitions(-DTILEDB_WEBP)
+    endif()
+
     add_executable(unit_filter_create EXCLUDE_FROM_ALL)
     target_link_libraries(unit_filter_create PUBLIC all_filters)
     find_package(Catch_EP REQUIRED)
