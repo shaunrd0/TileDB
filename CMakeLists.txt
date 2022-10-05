@@ -403,6 +403,12 @@ endforeach()
 add_library(local_install INTERFACE)
 target_include_directories(local_install INTERFACE ${TILEDB_LOCALINSTALL_INCLUDE})
 
+# -------------------------------------------------------
+# Accumulators for object libraries and unit tests
+# -------------------------------------------------------
+include(accumulator)
+define_accumulator(object_library_compile_targets)
+
 ############################################################
 # Enable testing and add subdirectories
 ############################################################
@@ -467,6 +473,11 @@ endif()
 if (TILEDB_TOOLS)
   add_subdirectory(tools)
 endif()
+
+# -------------------------------------------------------
+#
+retrieve_from(Compile_Targets ACCUMULATOR object_library_compile_targets)
+add_dependencies(all_link_complete ${Compile_Targets})
 
 ###########################################################
 # Uninstall
