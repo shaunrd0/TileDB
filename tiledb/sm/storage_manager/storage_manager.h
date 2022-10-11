@@ -436,6 +436,13 @@ class StorageManager {
   Status delete_array(const char* array_name);
 
   /**
+   * Cleans up the group data.
+   *
+   * @param group_name The name of the group whose data is to be deleted.
+   */
+  void delete_group(const char* group_name);
+
+  /**
    * Cleans up the array fragments.
    *
    * @param array_name The name of the array whose fragments are to be deleted.
