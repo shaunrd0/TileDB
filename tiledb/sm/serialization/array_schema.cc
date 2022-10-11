@@ -235,7 +235,12 @@ tuple<Status, optional<shared_ptr<Filter>>> filter_from_capnp(
       return {Status::Ok(), tiledb::common::make_shared<XORFilter>(HERE())};
     }
     case FilterType::FILTER_WEBP:
+#ifdef TILEDB_WEBP
       return {Status::Ok(), tiledb::common::make_shared<WebpFilter>(HERE())};
+#else
+      throw std::logic_error(
+          "Can't create WebP filter; built with TILEDB_WEBP=OFF");
+#endif
     default: {
       throw std::logic_error(
           "Invalid data received from filter pipeline capnp reader, unknown "
