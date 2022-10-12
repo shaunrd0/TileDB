@@ -607,15 +607,14 @@ Status StorageManager::write_commit_ignore_file(
   return Status::Ok();
 }
 
-Status StorageManager::delete_array(const char* array_name) {
-  Status st;
+void StorageManager::delete_array(const char* array_name) {
   if (array_name == nullptr) {
     throw Status_StorageManagerError(
         "[delete_array] Array name cannot be null");
   }
 
   // Delete fragments and commits
-  RETURN_NOT_OK(
+  throw_if_not_ok(
       delete_fragments(array_name, 0, std::numeric_limits<uint64_t>::max()));
 
   auto array_dir = ArrayDirectory(
@@ -637,7 +636,7 @@ Status StorageManager::delete_array(const char* array_name) {
         RETURN_NOT_OK(vfs_->remove_file(array_meta_uris[i].uri_));
         return Status::Ok();
       });
-  RETURN_NOT_OK(status);
+  throw_if_not_ok(status);
 
   // Delete fragment metadata files
   status =
@@ -645,7 +644,7 @@ Status StorageManager::delete_array(const char* array_name) {
         RETURN_NOT_OK(vfs_->remove_file(fragment_meta_uris[i]));
         return Status::Ok();
       });
-  RETURN_NOT_OK(status);
+  throw_if_not_ok(status);
 
   // Delete array schema files
   status =
@@ -653,9 +652,7 @@ Status StorageManager::delete_array(const char* array_name) {
         RETURN_NOT_OK(vfs_->remove_file(array_schema_uris[i]));
         return Status::Ok();
       });
-  RETURN_NOT_OK(status);
-
-  return Status::Ok();
+  throw_if_not_ok(status);
 }
 
 Status StorageManager::delete_fragments(
