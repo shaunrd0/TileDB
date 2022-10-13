@@ -679,7 +679,7 @@ struct ArrayDirectory {
     timestampEnd @2 :UInt64;
   }
 
-  struct DeleteTileLocation {
+  struct DeleteAndUpdateTileLocation {
     uri @0 :Text;
     conditionMarker @1 :Text;
     offset @2 :UInt64;
@@ -720,7 +720,7 @@ struct ArrayDirectory {
   fragmentMetaUris @10 :List(Text);
   # the URIs of the consolidated fragment metadata files
 
-  deleteTilesLocation @11 :List(DeleteTileLocation);
+  deleteAndUpdateTileLocation @11 :List(DeleteAndUpdateTileLocation);
   # the location of delete tiles
 
   timestampStart @12 :UInt64;
