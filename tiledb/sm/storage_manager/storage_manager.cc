@@ -256,7 +256,7 @@ StorageManager::load_array_schemas_and_fragment_metadata(
       Status::Ok(), array_schema_latest, array_schemas_all, fragment_metadata};
 }
 
-void ensure_supported_schema_version_for_read(uint32_t version) {
+void ensure_supported_schema_version_for_read(format_version_t version) {
   // We do not allow reading from arrays written by newer version of TileDB
   if (version > constants::format_version) {
     std::stringstream err;
@@ -2067,10 +2067,7 @@ Status StorageManager::store_metadata(
   RETURN_NOT_OK(metadata->get_uri(uri, &metadata_uri));
 
   RETURN_NOT_OK(store_data_to_generic_tile(
-      tile.data(),
-      tile.size(),
-      metadata_uri,
-      encryption_key));
+      tile.data(), tile.size(), metadata_uri, encryption_key));
 
   return Status::Ok();
 }

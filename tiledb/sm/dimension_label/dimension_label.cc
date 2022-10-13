@@ -242,7 +242,8 @@ void DimensionLabel::load_schema(
     throw std::runtime_error(
         "[DimensionLabel::load_schema] Unable to load dimension label schema; "
         "Unexpected number of values for the format version.");
-  uint32_t format_version{*static_cast<const uint32_t*>(format_version_value)};
+  format_version_t format_version{
+      *static_cast<const format_version_t*>(format_version_value)};
   if (format_version > 1)
     throw StatusException(
         "DimensionLabel",
@@ -320,7 +321,7 @@ void create_dimension_label(
   label_group.open(QueryType::WRITE);
 
   // Add metadata to group.
-  const uint32_t format_version{1};
+  const format_version_t format_version{1};
   label_group.put_metadata(
       "__dimension_label_format_version", Datatype::UINT32, 1, &format_version);
   uint8_t label_order_int{static_cast<uint8_t>(schema.label_order())};

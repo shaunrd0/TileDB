@@ -42,7 +42,7 @@
 using namespace tiledb::common;
 using namespace tiledb::sm;
 
-const uint32_t test_format_version{16};
+const format_version_t test_format_version{16};
 
 /**
  * Create example fragment timestamps.
