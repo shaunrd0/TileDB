@@ -190,6 +190,7 @@ if(TILEDB_WEBP)
     add_library(webp_filters OBJECT webp_filter.cc)
     target_link_libraries(webp_filters PUBLIC filter $<TARGET_OBJECTS:filter>)
     target_link_libraries(webp_filters PUBLIC misc_types $<TARGET_OBJECTS:misc_types>)
+    target_compile_definitions(webp_filters PUBLIC -DTILEDB_WEBP)
     find_package(Webp_EP REQUIRED)
     target_link_libraries(webp_filters PRIVATE WebP::webp)
 
@@ -238,9 +239,6 @@ add_dependencies(all_link_complete compile_filter_pipeline)
 
 
 if (TILEDB_TESTS)
-    if (TILEDB_WEBP)
-        add_definitions(-DTILEDB_WEBP)
-    endif()
 
     add_executable(unit_filter_create EXCLUDE_FROM_ALL)
     target_link_libraries(unit_filter_create PUBLIC all_filters)
