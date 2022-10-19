@@ -467,9 +467,7 @@ int32_t tiledb_buffer_list_get_buffer(
 
   // Get the underlying buffer
   tiledb::sm::Buffer* b;
-  if (SAVE_ERROR_CATCH(
-          ctx, buffer_list->buffer_list_->get_buffer(buffer_idx, &b)))
-    return TILEDB_ERR;
+  throw_if_not_ok(buffer_list->buffer_list_->get_buffer(buffer_idx, &b));
 
   // Create a buffer struct
   *buffer = new (std::nothrow) tiledb_buffer_t;
@@ -525,15 +523,12 @@ int32_t tiledb_buffer_list_flatten(
 
   // Resize the dest buffer
   const auto nbytes = buffer_list->buffer_list_->total_size();
-  if (SAVE_ERROR_CATCH(ctx, (*buffer)->buffer_->realloc(nbytes)))
-    return TILEDB_ERR;
+  throw_if_not_ok((*buffer)->buffer_->realloc(nbytes));
 
   // Read all into the dest buffer
   buffer_list->buffer_list_->reset_offset();
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          buffer_list->buffer_list_->read((*buffer)->buffer_->data(), nbytes)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      buffer_list->buffer_list_->read((*buffer)->buffer_->data(), nbytes));
 
   // Set the result size
   (*buffer)->buffer_->set_size(nbytes);
@@ -591,9 +586,7 @@ int32_t tiledb_attribute_set_nullable(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, attr) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, attr->attr_->set_nullable(static_cast<bool>(nullable))))
-    return TILEDB_ERR;
+  throw_if_not_ok(attr->attr_->set_nullable(static_cast<bool>(nullable)));
 
   return TILEDB_OK;
 }
@@ -608,9 +601,7 @@ int32_t tiledb_attribute_set_filter_list(
   }
   api::ensure_filter_list_is_valid(filter_list);
 
-  if (SAVE_ERROR_CATCH(
-          ctx, attr->attr_->set_filter_pipeline(filter_list->pipeline())))
-    return TILEDB_ERR;
+  throw_if_not_ok(attr->attr_->set_filter_pipeline(filter_list->pipeline()));
 
   return TILEDB_OK;
 }
@@ -619,8 +610,7 @@ int32_t tiledb_attribute_set_cell_val_num(
     tiledb_ctx_t* ctx, tiledb_attribute_t* attr, uint32_t cell_val_num) {
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, attr) == TILEDB_ERR)
     return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(ctx, attr->attr_->set_cell_val_num(cell_val_num)))
-    return TILEDB_ERR;
+  throw_if_not_ok(attr->attr_->set_cell_val_num(cell_val_num));
   return TILEDB_OK;
 }
 
@@ -649,9 +639,7 @@ int32_t tiledb_attribute_get_nullable(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, attr) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, attr->attr_->get_nullable(reinterpret_cast<bool*>(nullable))))
-    return TILEDB_ERR;
+  throw_if_not_ok(attr->attr_->get_nullable(reinterpret_cast<bool*>(nullable)));
 
   return TILEDB_OK;
 }
@@ -701,8 +689,7 @@ int32_t tiledb_attribute_set_fill_value(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, attr) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, attr->attr_->set_fill_value(value, size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(attr->attr_->set_fill_value(value, size));
 
   return TILEDB_OK;
 }
@@ -715,8 +702,7 @@ int32_t tiledb_attribute_get_fill_value(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, attr) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, attr->attr_->get_fill_value(value, size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(attr->attr_->get_fill_value(value, size));
 
   return TILEDB_OK;
 }
@@ -730,8 +716,7 @@ int32_t tiledb_attribute_set_fill_value_nullable(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, attr) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, attr->attr_->set_fill_value(value, size, valid)))
-    return TILEDB_ERR;
+  throw_if_not_ok(attr->attr_->set_fill_value(value, size, valid));
 
   return TILEDB_OK;
 }
@@ -745,8 +730,7 @@ int32_t tiledb_attribute_get_fill_value_nullable(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, attr) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, attr->attr_->get_fill_value(value, size, valid)))
-    return TILEDB_ERR;
+  throw_if_not_ok(attr->attr_->get_fill_value(value, size, valid));
 
   return TILEDB_OK;
 }
@@ -830,11 +814,8 @@ int32_t tiledb_domain_add_dimension(
       sanity_check(ctx, domain) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          domain->domain_->add_dimension(
-              make_shared<tiledb::sm::Dimension>(HERE(), dim->dim_))))
-    return TILEDB_ERR;
+  throw_if_not_ok(domain->domain_->add_dimension(
+      make_shared<tiledb::sm::Dimension>(HERE(), dim->dim_)));
 
   return TILEDB_OK;
 }
@@ -921,9 +902,7 @@ int32_t tiledb_dimension_set_filter_list(
   }
   api::ensure_filter_list_is_valid(filter_list);
 
-  if (SAVE_ERROR_CATCH(
-          ctx, dim->dim_->set_filter_pipeline(filter_list->pipeline())))
-    return TILEDB_ERR;
+  throw_if_not_ok(dim->dim_->set_filter_pipeline(filter_list->pipeline()));
 
   return TILEDB_OK;
 }
@@ -932,8 +911,7 @@ int32_t tiledb_dimension_set_cell_val_num(
     tiledb_ctx_t* ctx, tiledb_dimension_t* dim, uint32_t cell_val_num) {
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, dim) == TILEDB_ERR)
     return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(ctx, dim->dim_->set_cell_val_num(cell_val_num)))
-    return TILEDB_ERR;
+  throw_if_not_ok(dim->dim_->set_cell_val_num(cell_val_num));
   return TILEDB_OK;
 }
 
@@ -1097,8 +1075,7 @@ int32_t tiledb_domain_has_dimension(
   }
 
   bool b;
-  if (SAVE_ERROR_CATCH(ctx, domain->domain_->has_dimension(name, &b)))
-    return TILEDB_ERR;
+  throw_if_not_ok(domain->domain_->has_dimension(name, &b));
 
   *has_dim = b ? 1 : 0;
 
@@ -1158,11 +1135,8 @@ int32_t tiledb_array_schema_add_attribute(
    * the user-visible handle to the attr no longer refers to the same object
    * that's in the array_schema.
    **/
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array_schema->array_schema_->add_attribute(
-              make_shared<tiledb::sm::Attribute>(HERE(), attr->attr_))))
-    return TILEDB_ERR;
+  throw_if_not_ok(array_schema->array_schema_->add_attribute(
+      make_shared<tiledb::sm::Attribute>(HERE(), attr->attr_)));
   return TILEDB_OK;
 }
 
@@ -1171,9 +1145,7 @@ int32_t tiledb_array_schema_set_allows_dups(
   if (sanity_check(ctx) == TILEDB_ERR ||
       sanity_check(ctx, array_schema) == TILEDB_ERR)
     return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx, array_schema->array_schema_->set_allows_dups(allows_dups)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array_schema->array_schema_->set_allows_dups(allows_dups));
   return TILEDB_OK;
 }
 
@@ -1202,11 +1174,8 @@ int32_t tiledb_array_schema_set_domain(
   if (sanity_check(ctx) == TILEDB_ERR ||
       sanity_check(ctx, array_schema) == TILEDB_ERR)
     return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array_schema->array_schema_->set_domain(
-              make_shared<tiledb::sm::Domain>(HERE(), domain->domain_))))
-    return TILEDB_ERR;
+  throw_if_not_ok(array_schema->array_schema_->set_domain(
+      make_shared<tiledb::sm::Domain>(HERE(), domain->domain_)));
   return TILEDB_OK;
 }
 
@@ -1226,11 +1195,8 @@ int32_t tiledb_array_schema_set_cell_order(
   if (sanity_check(ctx) == TILEDB_ERR ||
       sanity_check(ctx, array_schema) == TILEDB_ERR)
     return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array_schema->array_schema_->set_cell_order(
-              static_cast<tiledb::sm::Layout>(cell_order))))
-    return TILEDB_ERR;
+  throw_if_not_ok(array_schema->array_schema_->set_cell_order(
+      static_cast<tiledb::sm::Layout>(cell_order)));
   return TILEDB_OK;
 }
 
@@ -1241,11 +1207,8 @@ int32_t tiledb_array_schema_set_tile_order(
   if (sanity_check(ctx) == TILEDB_ERR ||
       sanity_check(ctx, array_schema) == TILEDB_ERR)
     return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array_schema->array_schema_->set_tile_order(
-              static_cast<tiledb::sm::Layout>(tile_order))))
-    return TILEDB_ERR;
+  throw_if_not_ok(array_schema->array_schema_->set_tile_order(
+      static_cast<tiledb::sm::Layout>(tile_order)));
   return TILEDB_OK;
 }
 
@@ -1275,11 +1238,8 @@ int32_t tiledb_array_schema_set_coords_filter_list(
   }
   api::ensure_filter_list_is_valid(filter_list);
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array_schema->array_schema_->set_coords_filter_pipeline(
-              filter_list->pipeline())))
-    return TILEDB_ERR;
+  throw_if_not_ok(array_schema->array_schema_->set_coords_filter_pipeline(
+      filter_list->pipeline()));
 
   return TILEDB_OK;
 }
@@ -1294,11 +1254,9 @@ int32_t tiledb_array_schema_set_offsets_filter_list(
   }
   api::ensure_filter_list_is_valid(filter_list);
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array_schema->array_schema_->set_cell_var_offsets_filter_pipeline(
-              filter_list->pipeline())))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      array_schema->array_schema_->set_cell_var_offsets_filter_pipeline(
+          filter_list->pipeline()));
 
   return TILEDB_OK;
 }
@@ -1313,11 +1271,9 @@ int32_t tiledb_array_schema_set_validity_filter_list(
   }
   api::ensure_filter_list_is_valid(filter_list);
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array_schema->array_schema_->set_cell_validity_filter_pipeline(
-              filter_list->pipeline())))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      array_schema->array_schema_->set_cell_validity_filter_pipeline(
+          filter_list->pipeline()));
 
   return TILEDB_OK;
 }
@@ -1328,8 +1284,7 @@ int32_t tiledb_array_schema_check(
       sanity_check(ctx, array_schema) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, array_schema->array_schema_->check()))
-    return TILEDB_ERR;
+  throw_if_not_ok(array_schema->array_schema_->check());
 
   return TILEDB_OK;
 }
@@ -1382,13 +1337,10 @@ int32_t tiledb_array_schema_load(
   } else {
     // Create key
     tiledb::sm::EncryptionKey key;
-    if (SAVE_ERROR_CATCH(
-            ctx,
-            key.set_key(
-                static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
-                nullptr,
-                0)))
-      return TILEDB_ERR;
+    throw_if_not_ok(key.set_key(
+        static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
+        nullptr,
+        0));
 
     // For easy reference
     auto storage_manager{ctx->storage_manager()};
@@ -1781,9 +1733,7 @@ int32_t tiledb_array_schema_has_attribute(
   }
 
   bool b;
-  if (SAVE_ERROR_CATCH(
-          ctx, array_schema->array_schema_->has_attribute(name, &b)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array_schema->array_schema_->has_attribute(name, &b));
 
   *has_attr = b ? 1 : 0;
 
@@ -1846,11 +1796,9 @@ int32_t tiledb_array_schema_evolution_add_attribute(
       sanity_check(ctx, attr) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array_schema_evolution->array_schema_evolution_->add_attribute(
-              attr->attr_)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      array_schema_evolution->array_schema_evolution_->add_attribute(
+          attr->attr_));
   return TILEDB_OK;
 
   // Success
@@ -1865,13 +1813,9 @@ int32_t tiledb_array_schema_evolution_drop_attribute(
       sanity_check(ctx, array_schema_evolution) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array_schema_evolution->array_schema_evolution_->drop_attribute(
-              attribute_name)))
-    return TILEDB_ERR;
-  return TILEDB_OK;
-  // Success
+  throw_if_not_ok(
+      array_schema_evolution->array_schema_evolution_->drop_attribute(
+          attribute_name));
   return TILEDB_OK;
 }
 
@@ -1884,11 +1828,9 @@ TILEDB_EXPORT int32_t tiledb_array_schema_evolution_set_timestamp_range(
       sanity_check(ctx, array_schema_evolution) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array_schema_evolution->array_schema_evolution_->set_timestamp_range(
-              {lo, hi})))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      array_schema_evolution->array_schema_evolution_->set_timestamp_range(
+          {lo, hi}));
   return TILEDB_OK;
 
   // Success
@@ -2013,8 +1955,7 @@ int32_t tiledb_query_set_subarray(
     return TILEDB_ERR;
 
   // Set subarray
-  if (SAVE_ERROR_CATCH(ctx, query->query_->set_subarray(subarray_vals)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->set_subarray(subarray_vals));
 
   return TILEDB_OK;
 }
@@ -2029,8 +1970,7 @@ int32_t tiledb_query_set_subarray_t(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, query->query_->set_subarray(*subarray->subarray_)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->set_subarray(*subarray->subarray_));
 
   return TILEDB_OK;
 }
@@ -2046,9 +1986,7 @@ int32_t tiledb_query_set_buffer(
     return TILEDB_ERR;
 
   // Set attribute buffer
-  if (SAVE_ERROR_CATCH(
-          ctx, query->query_->set_data_buffer(name, buffer, buffer_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->set_data_buffer(name, buffer, buffer_size));
 
   return TILEDB_OK;
 }
@@ -2066,14 +2004,10 @@ int32_t tiledb_query_set_buffer_var(
     return TILEDB_ERR;
 
   // Set attribute buffers
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->set_data_buffer(name, buffer_val, buffer_val_size)))
-    return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->set_offsets_buffer(name, buffer_off, buffer_off_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      query->query_->set_data_buffer(name, buffer_val, buffer_val_size));
+  throw_if_not_ok(
+      query->query_->set_offsets_buffer(name, buffer_off, buffer_off_size));
 
   return TILEDB_OK;
 }
@@ -2091,14 +2025,9 @@ int32_t tiledb_query_set_buffer_nullable(
     return TILEDB_ERR;
 
   // Set attribute buffer
-  if (SAVE_ERROR_CATCH(
-          ctx, query->query_->set_data_buffer(name, buffer, buffer_size)))
-    return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->set_validity_buffer(
-              name, buffer_validity_bytemap, buffer_validity_bytemap_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->set_data_buffer(name, buffer, buffer_size));
+  throw_if_not_ok(query->query_->set_validity_buffer(
+      name, buffer_validity_bytemap, buffer_validity_bytemap_size));
 
   return TILEDB_OK;
 }
@@ -2118,19 +2047,12 @@ int32_t tiledb_query_set_buffer_var_nullable(
     return TILEDB_ERR;
 
   // Set attribute buffers
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->set_data_buffer(name, buffer_val, buffer_val_size)))
-    return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->set_offsets_buffer(name, buffer_off, buffer_off_size)))
-    return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->set_validity_buffer(
-              name, buffer_validity_bytemap, buffer_validity_bytemap_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      query->query_->set_data_buffer(name, buffer_val, buffer_val_size));
+  throw_if_not_ok(
+      query->query_->set_offsets_buffer(name, buffer_off, buffer_off_size));
+  throw_if_not_ok(query->query_->set_validity_buffer(
+      name, buffer_validity_bytemap, buffer_validity_bytemap_size));
 
   return TILEDB_OK;
 }
@@ -2145,9 +2067,7 @@ int32_t tiledb_query_set_data_buffer(
     return TILEDB_ERR;
 
   // Set attribute buffer
-  if (SAVE_ERROR_CATCH(
-          ctx, query->query_->set_data_buffer(name, buffer, buffer_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->set_data_buffer(name, buffer, buffer_size));
 
   return TILEDB_OK;
 }
@@ -2162,11 +2082,8 @@ int32_t tiledb_query_set_offsets_buffer(
     return TILEDB_ERR;
 
   // Set attribute buffer
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->set_offsets_buffer(
-              name, buffer_offsets, buffer_offsets_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->set_offsets_buffer(
+      name, buffer_offsets, buffer_offsets_size));
 
   return TILEDB_OK;
 }
@@ -2181,11 +2098,8 @@ int32_t tiledb_query_set_validity_buffer(
     return TILEDB_ERR;
 
   // Set attribute buffer
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->set_validity_buffer(
-              name, buffer_validity, buffer_validity_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->set_validity_buffer(
+      name, buffer_validity, buffer_validity_size));
 
   return TILEDB_OK;
 }
@@ -2201,9 +2115,7 @@ int32_t tiledb_query_get_buffer(
     return TILEDB_ERR;
 
   // Set attribute buffer
-  if (SAVE_ERROR_CATCH(
-          ctx, query->query_->get_data_buffer(name, buffer, buffer_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->get_data_buffer(name, buffer, buffer_size));
 
   return TILEDB_OK;
 }
@@ -2221,14 +2133,10 @@ int32_t tiledb_query_get_buffer_var(
     return TILEDB_ERR;
 
   // Get attribute buffers
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->get_data_buffer(name, buffer_val, buffer_val_size)))
-    return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->get_offsets_buffer(name, buffer_off, buffer_off_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      query->query_->get_data_buffer(name, buffer_val, buffer_val_size));
+  throw_if_not_ok(
+      query->query_->get_offsets_buffer(name, buffer_off, buffer_off_size));
 
   return TILEDB_OK;
 }
@@ -2246,14 +2154,9 @@ int32_t tiledb_query_get_buffer_nullable(
     return TILEDB_ERR;
 
   // Set attribute buffer
-  if (SAVE_ERROR_CATCH(
-          ctx, query->query_->get_data_buffer(name, buffer, buffer_size)))
-    return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->get_validity_buffer(
-              name, buffer_validity_bytemap, buffer_validity_bytemap_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->get_data_buffer(name, buffer, buffer_size));
+  throw_if_not_ok(query->query_->get_validity_buffer(
+      name, buffer_validity_bytemap, buffer_validity_bytemap_size));
 
   return TILEDB_OK;
 }
@@ -2273,19 +2176,12 @@ int32_t tiledb_query_get_buffer_var_nullable(
     return TILEDB_ERR;
 
   // Get attribute buffers
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->get_data_buffer(name, buffer_val, buffer_val_size)))
-    return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->get_offsets_buffer(name, buffer_off, buffer_off_size)))
-    return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->get_validity_buffer(
-              name, buffer_validity_bytemap, buffer_validity_bytemap_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      query->query_->get_data_buffer(name, buffer_val, buffer_val_size));
+  throw_if_not_ok(
+      query->query_->get_offsets_buffer(name, buffer_off, buffer_off_size));
+  throw_if_not_ok(query->query_->get_validity_buffer(
+      name, buffer_validity_bytemap, buffer_validity_bytemap_size));
 
   return TILEDB_OK;
 }
@@ -2301,9 +2197,7 @@ int32_t tiledb_query_get_data_buffer(
     return TILEDB_ERR;
 
   // Get attribute buffer
-  if (SAVE_ERROR_CATCH(
-          ctx, query->query_->get_data_buffer(name, buffer, buffer_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->get_data_buffer(name, buffer, buffer_size));
 
   return TILEDB_OK;
 }
@@ -2319,9 +2213,7 @@ int32_t tiledb_query_get_offsets_buffer(
     return TILEDB_ERR;
 
   // Get attribute buffer
-  if (SAVE_ERROR_CATCH(
-          ctx, query->query_->get_offsets_buffer(name, buffer, buffer_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->get_offsets_buffer(name, buffer, buffer_size));
 
   return TILEDB_OK;
 }
@@ -2337,9 +2229,8 @@ int32_t tiledb_query_get_validity_buffer(
     return TILEDB_ERR;
 
   // Get attribute buffer
-  if (SAVE_ERROR_CATCH(
-          ctx, query->query_->get_validity_buffer(name, buffer, buffer_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      query->query_->get_validity_buffer(name, buffer, buffer_size));
 
   return TILEDB_OK;
 }
@@ -2351,10 +2242,8 @@ int32_t tiledb_query_set_layout(
     return TILEDB_ERR;
 
   // Set layout
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->set_layout(static_cast<tiledb::sm::Layout>(layout))))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      query->query_->set_layout(static_cast<tiledb::sm::Layout>(layout)));
 
   return TILEDB_OK;
 }
@@ -2370,9 +2259,7 @@ int32_t tiledb_query_set_condition(
     return TILEDB_ERR;
 
   // Set layout
-  if (SAVE_ERROR_CATCH(
-          ctx, query->query_->set_condition(*cond->query_condition_)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->set_condition(*cond->query_condition_));
 
   return TILEDB_OK;
 }
@@ -2387,8 +2274,7 @@ int32_t tiledb_query_finalize(tiledb_ctx_t* ctx, tiledb_query_t* query) {
     return TILEDB_ERR;
 
   // Flush query
-  if (SAVE_ERROR_CATCH(ctx, query->query_->finalize()))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->finalize());
 
   return TILEDB_OK;
 }
@@ -2403,8 +2289,7 @@ int32_t tiledb_query_submit_and_finalize(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, query) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, query->query_->submit_and_finalize()))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->submit_and_finalize());
 
   return TILEDB_OK;
 }
@@ -2422,8 +2307,7 @@ int32_t tiledb_query_submit(tiledb_ctx_t* ctx, tiledb_query_t* query) {
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, query) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, query->query_->submit()))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->submit());
 
   return TILEDB_OK;
 }
@@ -2436,9 +2320,7 @@ int32_t tiledb_query_submit_async(
   // Sanity checks
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, query) == TILEDB_ERR)
     return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx, query->query_->submit_async(callback, callback_data)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->submit_async(callback, callback_data));
 
   return TILEDB_OK;
 }
@@ -2721,8 +2603,7 @@ int32_t tiledb_query_get_est_result_size(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, query) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, query->query_->get_est_result_size(name, size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->get_est_result_size(name, size));
 
   return TILEDB_OK;
 }
@@ -2736,9 +2617,7 @@ int32_t tiledb_query_get_est_result_size_var(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, query) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, query->query_->get_est_result_size(name, size_off, size_val)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->get_est_result_size(name, size_off, size_val));
 
   return TILEDB_OK;
 }
@@ -2752,11 +2631,8 @@ int32_t tiledb_query_get_est_result_size_nullable(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, query) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->get_est_result_size_nullable(
-              name, size_val, size_validity)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->get_est_result_size_nullable(
+      name, size_val, size_validity));
 
   return TILEDB_OK;
 }
@@ -2771,11 +2647,8 @@ int32_t tiledb_query_get_est_result_size_var_nullable(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, query) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->get_est_result_size_nullable(
-              name, size_off, size_val, size_validity)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->get_est_result_size_nullable(
+      name, size_off, size_val, size_validity));
 
   return TILEDB_OK;
 }
@@ -2785,8 +2658,7 @@ int32_t tiledb_query_get_fragment_num(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, query) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, query->query_->get_written_fragment_num(num)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->get_written_fragment_num(num));
 
   return TILEDB_OK;
 }
@@ -2799,8 +2671,7 @@ int32_t tiledb_query_get_fragment_uri(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, query) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, query->query_->get_written_fragment_uri(idx, uri)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->get_written_fragment_uri(idx, uri));
 
   return TILEDB_OK;
 }
@@ -2814,10 +2685,8 @@ int32_t tiledb_query_get_fragment_timestamp_range(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, query) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->get_written_fragment_timestamp_range(idx, t1, t2)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      query->query_->get_written_fragment_timestamp_range(idx, t1, t2));
 
   return TILEDB_OK;
 }
@@ -2871,12 +2740,8 @@ int32_t tiledb_query_add_update_value(
   }
 
   // Add update value.
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          query->query_->add_update_value(
-              field_name, update_value, update_value_size))) {
-    return TILEDB_ERR;
-  }
+  throw_if_not_ok(query->query_->add_update_value(
+      field_name, update_value, update_value_size));
 
   // Success
   return TILEDB_OK;
@@ -2945,9 +2810,8 @@ int32_t tiledb_subarray_set_coalesce_ranges(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, subarray->subarray_->set_coalesce_ranges(coalesce_ranges != 0)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      subarray->subarray_->set_coalesce_ranges(coalesce_ranges != 0));
 
   return TILEDB_OK;
 }
@@ -2960,9 +2824,7 @@ int32_t tiledb_subarray_set_subarray(
       sanity_check(ctx, subarray_obj) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, subarray_obj->subarray_->set_subarray(subarray_vals)))
-    return TILEDB_ERR;
+  throw_if_not_ok(subarray_obj->subarray_->set_subarray(subarray_vals));
 
   return TILEDB_OK;
 }
@@ -2978,9 +2840,7 @@ int32_t tiledb_subarray_add_range(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, subarray->subarray_->add_range(dim_idx, start, end, stride)))
-    return TILEDB_ERR;
+  throw_if_not_ok(subarray->subarray_->add_range(dim_idx, start, end, stride));
 
   return TILEDB_OK;
 }
@@ -2995,9 +2855,7 @@ int32_t tiledb_subarray_add_point_ranges(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, subarray->subarray_->add_point_ranges(dim_idx, start, count)))
-    return TILEDB_ERR;
+  throw_if_not_ok(subarray->subarray_->add_point_ranges(dim_idx, start, count));
 
   return TILEDB_OK;
 }
@@ -3013,10 +2871,8 @@ int32_t tiledb_subarray_add_range_by_name(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          subarray->subarray_->add_range_by_name(dim_name, start, end, stride)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      subarray->subarray_->add_range_by_name(dim_name, start, end, stride));
 
   return TILEDB_OK;
 }
@@ -3033,11 +2889,8 @@ int32_t tiledb_subarray_add_range_var(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          subarray->subarray_->add_range_var(
-              dim_idx, start, start_size, end, end_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(subarray->subarray_->add_range_var(
+      dim_idx, start, start_size, end, end_size));
 
   return TILEDB_OK;
 }
@@ -3054,11 +2907,8 @@ int32_t tiledb_subarray_add_range_var_by_name(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          subarray->subarray_->add_range_var_by_name(
-              dim_name, start, start_size, end, end_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(subarray->subarray_->add_range_var_by_name(
+      dim_name, start, start_size, end, end_size));
 
   return TILEDB_OK;
 }
@@ -3072,9 +2922,7 @@ int32_t tiledb_subarray_get_range_num(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, subarray->subarray_->get_range_num(dim_idx, range_num)))
-    return TILEDB_ERR;
+  throw_if_not_ok(subarray->subarray_->get_range_num(dim_idx, range_num));
 
   return TILEDB_OK;
 }
@@ -3088,10 +2936,8 @@ int32_t tiledb_subarray_get_range_num_from_name(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          subarray->subarray_->get_range_num_from_name(dim_name, range_num)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      subarray->subarray_->get_range_num_from_name(dim_name, range_num));
 
   return TILEDB_OK;
 }
@@ -3108,11 +2954,8 @@ int32_t tiledb_subarray_get_range(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          subarray->subarray_->get_range(
-              dim_idx, range_idx, start, end, stride)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      subarray->subarray_->get_range(dim_idx, range_idx, start, end, stride));
 
   return TILEDB_OK;
 }
@@ -3128,11 +2971,8 @@ int32_t tiledb_subarray_get_range_var_size(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          subarray->subarray_->get_range_var_size(
-              dim_idx, range_idx, start_size, end_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(subarray->subarray_->get_range_var_size(
+      dim_idx, range_idx, start_size, end_size));
 
   return TILEDB_OK;
 }
@@ -3149,11 +2989,8 @@ int32_t tiledb_subarray_get_range_from_name(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          subarray->subarray_->get_range_from_name(
-              dim_name, range_idx, start, end, stride)))
-    return TILEDB_ERR;
+  throw_if_not_ok(subarray->subarray_->get_range_from_name(
+      dim_name, range_idx, start, end, stride));
 
   return TILEDB_OK;
 }
@@ -3169,11 +3006,8 @@ int32_t tiledb_subarray_get_range_var_size_from_name(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          subarray->subarray_->get_range_var_size_from_name(
-              dim_name, range_idx, start_size, end_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(subarray->subarray_->get_range_var_size_from_name(
+      dim_name, range_idx, start_size, end_size));
 
   return TILEDB_OK;
 }
@@ -3189,10 +3023,8 @@ int32_t tiledb_subarray_get_range_var(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          subarray->subarray_->get_range_var(dim_idx, range_idx, start, end)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      subarray->subarray_->get_range_var(dim_idx, range_idx, start, end));
 
   return TILEDB_OK;
 }
@@ -3208,11 +3040,8 @@ int32_t tiledb_subarray_get_range_var_from_name(
       sanity_check(ctx, subarray) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          subarray->subarray_->get_range_var_from_name(
-              dim_name, range_idx, start, end)))
-    return TILEDB_ERR;
+  throw_if_not_ok(subarray->subarray_->get_range_var_from_name(
+      dim_name, range_idx, start, end));
 
   return TILEDB_OK;
 }
@@ -3395,9 +3224,7 @@ int32_t tiledb_array_set_open_timestamp_start(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, array) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, array->array_->set_timestamp_start(timestamp_start)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->set_timestamp_start(timestamp_start));
 
   return TILEDB_OK;
 }
@@ -3407,8 +3234,7 @@ int32_t tiledb_array_set_open_timestamp_end(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, array) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, array->array_->set_timestamp_end(timestamp_end)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->set_timestamp_end(timestamp_end));
 
   return TILEDB_OK;
 }
@@ -3442,11 +3268,8 @@ int32_t tiledb_array_delete_fragments(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, array) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array->array_->delete_fragments(
-              tiledb::sm::URI(uri), timestamp_start, timestamp_end)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->delete_fragments(
+      tiledb::sm::URI(uri), timestamp_start, timestamp_end));
 
   return TILEDB_OK;
 }
@@ -3457,14 +3280,11 @@ int32_t tiledb_array_open(
     return TILEDB_ERR;
 
   // Open array
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array->array_->open(
-              static_cast<tiledb::sm::QueryType>(query_type),
-              static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
-              nullptr,
-              0)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->open(
+      static_cast<tiledb::sm::QueryType>(query_type),
+      static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
+      nullptr,
+      0));
 
   return TILEDB_OK;
 }
@@ -3478,16 +3298,13 @@ int32_t tiledb_array_open_at(
     return TILEDB_ERR;
 
   // Open array
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array->array_->open(
-              static_cast<tiledb::sm::QueryType>(query_type),
-              0,
-              timestamp,
-              static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
-              nullptr,
-              0)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->open(
+      static_cast<tiledb::sm::QueryType>(query_type),
+      0,
+      timestamp,
+      static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
+      nullptr,
+      0));
 
   return TILEDB_OK;
 }
@@ -3503,14 +3320,11 @@ int32_t tiledb_array_open_with_key(
     return TILEDB_ERR;
 
   // Open array
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array->array_->open(
-              static_cast<tiledb::sm::QueryType>(query_type),
-              static_cast<tiledb::sm::EncryptionType>(encryption_type),
-              encryption_key,
-              key_length)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->open(
+      static_cast<tiledb::sm::QueryType>(query_type),
+      static_cast<tiledb::sm::EncryptionType>(encryption_type),
+      encryption_key,
+      key_length));
 
   return TILEDB_OK;
 }
@@ -3527,16 +3341,13 @@ int32_t tiledb_array_open_at_with_key(
     return TILEDB_ERR;
 
   // Open array
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array->array_->open(
-              static_cast<tiledb::sm::QueryType>(query_type),
-              0,
-              timestamp,
-              static_cast<tiledb::sm::EncryptionType>(encryption_type),
-              encryption_key,
-              key_length)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->open(
+      static_cast<tiledb::sm::QueryType>(query_type),
+      0,
+      timestamp,
+      static_cast<tiledb::sm::EncryptionType>(encryption_type),
+      encryption_key,
+      key_length));
 
   return TILEDB_OK;
 }
@@ -3556,8 +3367,7 @@ int32_t tiledb_array_reopen(tiledb_ctx_t* ctx, tiledb_array_t* array) {
     return TILEDB_ERR;
 
   // Reopen array
-  if (SAVE_ERROR_CATCH(ctx, array->array_->reopen()))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->reopen());
 
   return TILEDB_OK;
 }
@@ -3568,8 +3378,7 @@ int32_t tiledb_array_reopen_at(
     return TILEDB_ERR;
 
   // Reopen array
-  if (SAVE_ERROR_CATCH(ctx, array->array_->reopen(0, timestamp_end)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->reopen(0, timestamp_end));
 
   return TILEDB_OK;
 }
@@ -3608,8 +3417,7 @@ int32_t tiledb_array_close(tiledb_ctx_t* ctx, tiledb_array_t* array) {
     return TILEDB_ERR;
 
   // Close array
-  if (SAVE_ERROR_CATCH(ctx, array->array_->close()))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->close());
 
   return TILEDB_OK;
 }
@@ -3702,28 +3510,18 @@ int32_t tiledb_array_create(
       return TILEDB_ERR;
     }
 
-    if (SAVE_ERROR_CATCH(
-            ctx,
-            rest_client->post_array_schema_to_rest(
-                uri, *(array_schema->array_schema_.get()))))
-      return TILEDB_ERR;
+    throw_if_not_ok(rest_client->post_array_schema_to_rest(
+        uri, *(array_schema->array_schema_.get())));
   } else {
     // Create key
     tiledb::sm::EncryptionKey key;
-    if (SAVE_ERROR_CATCH(
-            ctx,
-            key.set_key(
-                static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
-                nullptr,
-                0)))
-      return TILEDB_ERR;
-
+    throw_if_not_ok(key.set_key(
+        static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
+        nullptr,
+        0));
     // Create the array
-    if (SAVE_ERROR_CATCH(
-            ctx,
-            ctx->storage_manager()->array_create(
-                uri, array_schema->array_schema_, key)))
-      return TILEDB_ERR;
+    throw_if_not_ok(ctx->storage_manager()->array_create(
+        uri, array_schema->array_schema_, key));
   }
 
   // Create any dimension labels in the array.
@@ -3798,28 +3596,19 @@ int32_t tiledb_array_create_with_key(
       return TILEDB_ERR;
     }
 
-    if (SAVE_ERROR_CATCH(
-            ctx,
-            rest_client->post_array_schema_to_rest(
-                uri, *(array_schema->array_schema_.get()))))
-      return TILEDB_ERR;
+    throw_if_not_ok(rest_client->post_array_schema_to_rest(
+        uri, *(array_schema->array_schema_.get())));
   } else {
     // Create key
     tiledb::sm::EncryptionKey key;
-    if (SAVE_ERROR_CATCH(
-            ctx,
-            key.set_key(
-                static_cast<tiledb::sm::EncryptionType>(encryption_type),
-                encryption_key,
-                key_length)))
-      return TILEDB_ERR;
-
+    throw_if_not_ok(key.set_key(
+        static_cast<tiledb::sm::EncryptionType>(encryption_type),
+        encryption_key,
+        key_length));
+    {}
     // Create the array
-    if (SAVE_ERROR_CATCH(
-            ctx,
-            ctx->storage_manager()->array_create(
-                uri, array_schema->array_schema_, key)))
-      return TILEDB_ERR;
+    throw_if_not_ok(ctx->storage_manager()->array_create(
+        uri, array_schema->array_schema_, key));
   }
   return TILEDB_OK;
 }
@@ -3848,16 +3637,13 @@ int32_t tiledb_array_consolidate_with_key(
   if (sanity_check(ctx) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->array_consolidate(
-              array_uri,
-              static_cast<tiledb::sm::EncryptionType>(encryption_type),
-              encryption_key,
-              key_length,
-              (config == nullptr) ? ctx->storage_manager()->config() :
-                                    config->config())))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->array_consolidate(
+      array_uri,
+      static_cast<tiledb::sm::EncryptionType>(encryption_type),
+      encryption_key,
+      key_length,
+      (config == nullptr) ? ctx->storage_manager()->config() :
+                            config->config()));
 
   return TILEDB_OK;
 }
@@ -3879,17 +3665,14 @@ int32_t tiledb_array_consolidate_fragments(
     uris.emplace_back(fragment_uris[i]);
   }
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->fragments_consolidate(
-              array_uri,
-              static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
-              nullptr,
-              0,
-              uris,
-              (config == nullptr) ? ctx->storage_manager()->config() :
-                                    config->config())))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->fragments_consolidate(
+      array_uri,
+      static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
+      nullptr,
+      0,
+      uris,
+      (config == nullptr) ? ctx->storage_manager()->config() :
+                            config->config()));
 
   return TILEDB_OK;
 }
@@ -3900,13 +3683,10 @@ int32_t tiledb_array_vacuum(
   if (sanity_check(ctx) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->array_vacuum(
-              array_uri,
-              (config == nullptr) ? ctx->storage_manager()->config() :
-                                    config->config())))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->array_vacuum(
+      array_uri,
+      (config == nullptr) ? ctx->storage_manager()->config() :
+                            config->config()));
 
   return TILEDB_OK;
 }
@@ -3918,11 +3698,8 @@ int32_t tiledb_array_get_non_empty_domain(
 
   bool is_empty_b;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->array_get_non_empty_domain(
-              array->array_.get(), domain, &is_empty_b)))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->array_get_non_empty_domain(
+      array->array_.get(), domain, &is_empty_b));
 
   *is_empty = (int32_t)is_empty_b;
 
@@ -3940,11 +3717,8 @@ int32_t tiledb_array_get_non_empty_domain_from_index(
 
   bool is_empty_b;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->array_get_non_empty_domain_from_index(
-              array->array_.get(), idx, domain, &is_empty_b)))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->array_get_non_empty_domain_from_index(
+      array->array_.get(), idx, domain, &is_empty_b));
 
   *is_empty = (int32_t)is_empty_b;
 
@@ -3962,11 +3736,8 @@ int32_t tiledb_array_get_non_empty_domain_from_name(
 
   bool is_empty_b;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->array_get_non_empty_domain_from_name(
-              array->array_.get(), name, domain, &is_empty_b)))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->array_get_non_empty_domain_from_name(
+      array->array_.get(), name, domain, &is_empty_b));
 
   *is_empty = (int32_t)is_empty_b;
 
@@ -3985,12 +3756,9 @@ int32_t tiledb_array_get_non_empty_domain_var_size_from_index(
 
   bool is_empty_b = true;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()
-              ->array_get_non_empty_domain_var_size_from_index(
-                  array->array_.get(), idx, start_size, end_size, &is_empty_b)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      ctx->storage_manager()->array_get_non_empty_domain_var_size_from_index(
+          array->array_.get(), idx, start_size, end_size, &is_empty_b));
 
   *is_empty = (int32_t)is_empty_b;
 
@@ -4009,11 +3777,9 @@ int32_t tiledb_array_get_non_empty_domain_var_size_from_name(
 
   bool is_empty_b = true;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->array_get_non_empty_domain_var_size_from_name(
-              array->array_.get(), name, start_size, end_size, &is_empty_b)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      ctx->storage_manager()->array_get_non_empty_domain_var_size_from_name(
+          array->array_.get(), name, start_size, end_size, &is_empty_b));
 
   *is_empty = (int32_t)is_empty_b;
 
@@ -4032,11 +3798,9 @@ int32_t tiledb_array_get_non_empty_domain_var_from_index(
 
   bool is_empty_b = true;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->array_get_non_empty_domain_var_from_index(
-              array->array_.get(), idx, start, end, &is_empty_b)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      ctx->storage_manager()->array_get_non_empty_domain_var_from_index(
+          array->array_.get(), idx, start, end, &is_empty_b));
 
   *is_empty = (int32_t)is_empty_b;
 
@@ -4055,11 +3819,9 @@ int32_t tiledb_array_get_non_empty_domain_var_from_name(
 
   bool is_empty_b = true;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->array_get_non_empty_domain_var_from_name(
-              array->array_.get(), name, start, end, &is_empty_b)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      ctx->storage_manager()->array_get_non_empty_domain_var_from_name(
+          array->array_.get(), name, start, end, &is_empty_b));
 
   *is_empty = (int32_t)is_empty_b;
 
@@ -4111,9 +3873,8 @@ int32_t tiledb_array_encryption_type(
 
   // Get encryption type
   tiledb::sm::EncryptionType enc;
-  if (SAVE_ERROR_CATCH(
-          ctx, ctx->storage_manager()->array_get_encryption(array_dir, &enc)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      ctx->storage_manager()->array_get_encryption(array_dir, &enc));
 
   *encryption_type = static_cast<tiledb_encryption_type_t>(enc);
 
@@ -4131,14 +3892,8 @@ int32_t tiledb_array_put_metadata(
     return TILEDB_ERR;
 
   // Put metadata
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array->array_->put_metadata(
-              key,
-              static_cast<tiledb::sm::Datatype>(value_type),
-              value_num,
-              value)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->put_metadata(
+      key, static_cast<tiledb::sm::Datatype>(value_type), value_num, value));
 
   return TILEDB_OK;
 }
@@ -4149,8 +3904,7 @@ int32_t tiledb_array_delete_metadata(
     return TILEDB_ERR;
 
   // Put metadata
-  if (SAVE_ERROR_CATCH(ctx, array->array_->delete_metadata(key)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->delete_metadata(key));
 
   return TILEDB_OK;
 }
@@ -4167,9 +3921,7 @@ int32_t tiledb_array_get_metadata(
 
   // Get metadata
   tiledb::sm::Datatype type;
-  if (SAVE_ERROR_CATCH(
-          ctx, array->array_->get_metadata(key, &type, value_num, value)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->get_metadata(key, &type, value_num, value));
 
   *value_type = static_cast<tiledb_datatype_t>(type);
 
@@ -4182,8 +3934,7 @@ int32_t tiledb_array_get_metadata_num(
     return TILEDB_ERR;
 
   // Get metadata num
-  if (SAVE_ERROR_CATCH(ctx, array->array_->get_metadata_num(num)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->get_metadata_num(num));
 
   return TILEDB_OK;
 }
@@ -4202,11 +3953,8 @@ int32_t tiledb_array_get_metadata_from_index(
 
   // Get metadata
   tiledb::sm::Datatype type;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          array->array_->get_metadata(
-              index, key, key_len, &type, value_num, value)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->get_metadata(
+      index, key, key_len, &type, value_num, value));
 
   *value_type = static_cast<tiledb_datatype_t>(type);
 
@@ -4225,9 +3973,7 @@ int32_t tiledb_array_has_metadata_key(
   // Check whether metadata has_key
   bool has_the_key;
   tiledb::sm::Datatype type;
-  if (SAVE_ERROR_CATCH(
-          ctx, array->array_->has_metadata_key(key, &type, &has_the_key)))
-    return TILEDB_ERR;
+  throw_if_not_ok(array->array_->has_metadata_key(key, &type, &has_the_key));
 
   *has_key = has_the_key ? 1 : 0;
   if (has_the_key) {
@@ -4242,16 +3988,13 @@ int32_t tiledb_array_consolidate_metadata(
   if (sanity_check(ctx) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->array_metadata_consolidate(
-              array_uri,
-              static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
-              nullptr,
-              0,
-              (config == nullptr) ? ctx->storage_manager()->config() :
-                                    config->config())))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->array_metadata_consolidate(
+      array_uri,
+      static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
+      nullptr,
+      0,
+      (config == nullptr) ? ctx->storage_manager()->config() :
+                            config->config()));
 
   return TILEDB_OK;
 }
@@ -4267,16 +4010,13 @@ int32_t tiledb_array_consolidate_metadata_with_key(
   if (sanity_check(ctx) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->array_metadata_consolidate(
-              array_uri,
-              static_cast<tiledb::sm::EncryptionType>(encryption_type),
-              encryption_key,
-              key_length,
-              (config == nullptr) ? ctx->storage_manager()->config() :
-                                    config->config())))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->array_metadata_consolidate(
+      array_uri,
+      static_cast<tiledb::sm::EncryptionType>(encryption_type),
+      encryption_key,
+      key_length,
+      (config == nullptr) ? ctx->storage_manager()->config() :
+                            config->config()));
 
   return TILEDB_OK;
 }
@@ -4301,20 +4041,13 @@ int32_t tiledb_array_evolve(
 
   // Create key
   tiledb::sm::EncryptionKey key;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          key.set_key(
-              static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
-              nullptr,
-              0)))
-    return TILEDB_ERR;
-
+  throw_if_not_ok(key.set_key(
+      static_cast<tiledb::sm::EncryptionType>(TILEDB_NO_ENCRYPTION),
+      nullptr,
+      0));
   // Evolve schema
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->array_evolve_schema(
-              uri, array_schema_evolution->array_schema_evolution_, key)))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->array_evolve_schema(
+      uri, array_schema_evolution->array_schema_evolution_, key));
 
   // Success
   return TILEDB_OK;
@@ -4336,16 +4069,11 @@ int32_t tiledb_array_upgrade_version(
   }
 
   // Upgrade version
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->array_upgrade_version(
-              uri,
-              (config == nullptr) ? ctx->storage_manager()->config() :
-                                    config->config()))) {
-    return TILEDB_ERR;
-  }
+  throw_if_not_ok(ctx->storage_manager()->array_upgrade_version(
+      uri,
+      (config == nullptr) ? ctx->storage_manager()->config() :
+                            config->config()));
 
-  // Success
   return TILEDB_OK;
 }
 
@@ -4360,9 +4088,7 @@ int32_t tiledb_object_type(
 
   auto uri = tiledb::sm::URI(path);
   tiledb::sm::ObjectType object_type;
-  if (SAVE_ERROR_CATCH(
-          ctx, ctx->storage_manager()->object_type(uri, &object_type)))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->object_type(uri, &object_type));
 
   *type = static_cast<tiledb_object_t>(object_type);
   return TILEDB_OK;
@@ -4371,8 +4097,7 @@ int32_t tiledb_object_type(
 int32_t tiledb_object_remove(tiledb_ctx_t* ctx, const char* path) {
   if (sanity_check(ctx) == TILEDB_ERR)
     return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(ctx, ctx->storage_manager()->object_remove(path)))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->object_remove(path));
   return TILEDB_OK;
 }
 
@@ -4380,9 +4105,7 @@ int32_t tiledb_object_move(
     tiledb_ctx_t* ctx, const char* old_path, const char* new_path) {
   if (sanity_check(ctx) == TILEDB_ERR)
     return TILEDB_ERR;
-  if (SAVE_ERROR_CATCH(
-          ctx, ctx->storage_manager()->object_move(old_path, new_path)))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->object_move(old_path, new_path));
   return TILEDB_OK;
 }
 
@@ -4404,11 +4127,8 @@ int32_t tiledb_object_walk(
 
   // Create an object iterator
   tiledb::sm::StorageManager::ObjectIter* obj_iter;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          ctx->storage_manager()->object_iter_begin(
-              &obj_iter, path, static_cast<tiledb::sm::WalkOrder>(order))))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->object_iter_begin(
+      &obj_iter, path, static_cast<tiledb::sm::WalkOrder>(order)));
 
   // For as long as there is another object and the callback indicates to
   // continue, walk over the TileDB objects in the path
@@ -4455,9 +4175,7 @@ int32_t tiledb_object_ls(
 
   // Create an object iterator
   tiledb::sm::StorageManager::ObjectIter* obj_iter;
-  if (SAVE_ERROR_CATCH(
-          ctx, ctx->storage_manager()->object_iter_begin(&obj_iter, path)))
-    return TILEDB_ERR;
+  throw_if_not_ok(ctx->storage_manager()->object_iter_begin(&obj_iter, path));
 
   // For as long as there is another object and the callback indicates to
   // continue, walk over the TileDB objects in the path
@@ -4552,8 +4270,7 @@ int32_t tiledb_vfs_create_bucket(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, vfs) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, vfs->vfs_->create_bucket(tiledb::sm::URI(uri))))
-    return TILEDB_ERR;
+  throw_if_not_ok(vfs->vfs_->create_bucket(tiledb::sm::URI(uri)));
 
   return TILEDB_OK;
 }
@@ -4563,8 +4280,7 @@ int32_t tiledb_vfs_remove_bucket(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, vfs) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, vfs->vfs_->remove_bucket(tiledb::sm::URI(uri))))
-    return TILEDB_ERR;
+  throw_if_not_ok(vfs->vfs_->remove_bucket(tiledb::sm::URI(uri)));
 
   return TILEDB_OK;
 }
@@ -4574,8 +4290,7 @@ int32_t tiledb_vfs_empty_bucket(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, vfs) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, vfs->vfs_->empty_bucket(tiledb::sm::URI(uri))))
-    return TILEDB_ERR;
+  throw_if_not_ok(vfs->vfs_->empty_bucket(tiledb::sm::URI(uri)));
 
   return TILEDB_OK;
 }
@@ -4586,9 +4301,7 @@ int32_t tiledb_vfs_is_empty_bucket(
     return TILEDB_ERR;
 
   bool b;
-  if (SAVE_ERROR_CATCH(
-          ctx, vfs->vfs_->is_empty_bucket(tiledb::sm::URI(uri), &b)))
-    return TILEDB_ERR;
+  throw_if_not_ok(vfs->vfs_->is_empty_bucket(tiledb::sm::URI(uri), &b));
   *is_empty = (int32_t)b;
 
   return TILEDB_OK;
@@ -4600,9 +4313,7 @@ int32_t tiledb_vfs_is_bucket(
     return TILEDB_ERR;
 
   bool exists;
-  if (SAVE_ERROR_CATCH(
-          ctx, vfs->vfs_->is_bucket(tiledb::sm::URI(uri), &exists)))
-    return TILEDB_ERR;
+  throw_if_not_ok(vfs->vfs_->is_bucket(tiledb::sm::URI(uri), &exists));
 
   *is_bucket = (int32_t)exists;
 
@@ -4614,8 +4325,7 @@ int32_t tiledb_vfs_create_dir(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, vfs) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, vfs->vfs_->create_dir(tiledb::sm::URI(uri))))
-    return TILEDB_ERR;
+  throw_if_not_ok(vfs->vfs_->create_dir(tiledb::sm::URI(uri)));
 
   return TILEDB_OK;
 }
@@ -4626,8 +4336,7 @@ int32_t tiledb_vfs_is_dir(
     return TILEDB_ERR;
 
   bool exists;
-  if (SAVE_ERROR_CATCH(ctx, vfs->vfs_->is_dir(tiledb::sm::URI(uri), &exists)))
-    return TILEDB_ERR;
+  throw_if_not_ok(vfs->vfs_->is_dir(tiledb::sm::URI(uri), &exists));
   *is_dir = (int32_t)exists;
 
   return TILEDB_OK;
@@ -4638,8 +4347,7 @@ int32_t tiledb_vfs_remove_dir(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, vfs) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, vfs->vfs_->remove_dir(tiledb::sm::URI(uri))))
-    return TILEDB_ERR;
+  throw_if_not_ok(vfs->vfs_->remove_dir(tiledb::sm::URI(uri)));
 
   return TILEDB_OK;
 }
@@ -4650,8 +4358,7 @@ int32_t tiledb_vfs_is_file(
     return TILEDB_ERR;
 
   bool exists;
-  if (SAVE_ERROR_CATCH(ctx, vfs->vfs_->is_file(tiledb::sm::URI(uri), &exists)))
-    return TILEDB_ERR;
+  throw_if_not_ok(vfs->vfs_->is_file(tiledb::sm::URI(uri), &exists));
   *is_file = (int32_t)exists;
 
   return TILEDB_OK;
@@ -4662,8 +4369,7 @@ int32_t tiledb_vfs_remove_file(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, vfs) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, vfs->vfs_->remove_file(tiledb::sm::URI(uri))))
-    return TILEDB_ERR;
+  throw_if_not_ok(vfs->vfs_->remove_file(tiledb::sm::URI(uri)));
 
   return TILEDB_OK;
 }
@@ -4673,8 +4379,7 @@ int32_t tiledb_vfs_dir_size(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, vfs) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, vfs->vfs_->dir_size(tiledb::sm::URI(uri), size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(vfs->vfs_->dir_size(tiledb::sm::URI(uri), size));
 
   return TILEDB_OK;
 }
@@ -4684,8 +4389,7 @@ int32_t tiledb_vfs_file_size(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, vfs) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, vfs->vfs_->file_size(tiledb::sm::URI(uri), size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(vfs->vfs_->file_size(tiledb::sm::URI(uri), size));
 
   return TILEDB_OK;
 }
@@ -4698,11 +4402,8 @@ int32_t tiledb_vfs_move_file(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, vfs) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          vfs->vfs_->move_file(
-              tiledb::sm::URI(old_uri), tiledb::sm::URI(new_uri))))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      vfs->vfs_->move_file(tiledb::sm::URI(old_uri), tiledb::sm::URI(new_uri)));
 
   return TILEDB_OK;
 }
@@ -4715,11 +4416,8 @@ int32_t tiledb_vfs_move_dir(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, vfs) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          vfs->vfs_->move_dir(
-              tiledb::sm::URI(old_uri), tiledb::sm::URI(new_uri))))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      vfs->vfs_->move_dir(tiledb::sm::URI(old_uri), tiledb::sm::URI(new_uri)));
 
   return TILEDB_OK;
 }
@@ -4732,11 +4430,8 @@ int32_t tiledb_vfs_copy_file(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, vfs) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          vfs->vfs_->copy_file(
-              tiledb::sm::URI(old_uri), tiledb::sm::URI(new_uri))))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      vfs->vfs_->copy_file(tiledb::sm::URI(old_uri), tiledb::sm::URI(new_uri)));
 
   return TILEDB_OK;
 }
@@ -4749,11 +4444,8 @@ int32_t tiledb_vfs_copy_dir(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, vfs) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          vfs->vfs_->copy_dir(
-              tiledb::sm::URI(old_uri), tiledb::sm::URI(new_uri))))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      vfs->vfs_->copy_dir(tiledb::sm::URI(old_uri), tiledb::sm::URI(new_uri)));
 
   return TILEDB_OK;
 }
@@ -4817,8 +4509,7 @@ int32_t tiledb_vfs_close(tiledb_ctx_t* ctx, tiledb_vfs_fh_t* fh) {
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, fh) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, fh->vfs_fh_->close()))
-    return TILEDB_ERR;
+  throw_if_not_ok(fh->vfs_fh_->close());
 
   return TILEDB_OK;
 }
@@ -4832,8 +4523,7 @@ int32_t tiledb_vfs_read(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, fh) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, fh->vfs_fh_->read(offset, buffer, nbytes)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fh->vfs_fh_->read(offset, buffer, nbytes));
 
   return TILEDB_OK;
 }
@@ -4846,8 +4536,7 @@ int32_t tiledb_vfs_write(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, fh) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, fh->vfs_fh_->write(buffer, nbytes)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fh->vfs_fh_->write(buffer, nbytes));
 
   return TILEDB_OK;
 }
@@ -4856,8 +4545,7 @@ int32_t tiledb_vfs_sync(tiledb_ctx_t* ctx, tiledb_vfs_fh_t* fh) {
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, fh) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, fh->vfs_fh_->sync()))
-    return TILEDB_ERR;
+  throw_if_not_ok(fh->vfs_fh_->sync());
 
   return TILEDB_OK;
 }
@@ -4923,8 +4611,7 @@ int32_t tiledb_vfs_touch(
   if (sanity_check(ctx) == TILEDB_ERR || sanity_check(ctx, vfs) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(ctx, vfs->vfs_->touch(tiledb::sm::URI(uri))))
-    return TILEDB_ERR;
+  throw_if_not_ok(vfs->vfs_->touch(tiledb::sm::URI(uri)));
 
   return TILEDB_OK;
 }
@@ -5408,16 +5095,13 @@ int32_t tiledb_deserialize_query(
       sanity_check(ctx, buffer) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          tiledb::sm::serialization::query_deserialize(
-              *buffer->buffer_,
-              (tiledb::sm::SerializationType)serialize_type,
-              client_side == 1,
-              nullptr,
-              query->query_,
-              ctx->storage_manager()->compute_tp())))
-    return TILEDB_ERR;
+  throw_if_not_ok(tiledb::sm::serialization::query_deserialize(
+      *buffer->buffer_,
+      (tiledb::sm::SerializationType)serialize_type,
+      client_side == 1,
+      nullptr,
+      query->query_,
+      ctx->storage_manager()->compute_tp()));
 
   return TILEDB_OK;
 }
@@ -5475,15 +5159,12 @@ int32_t tiledb_deserialize_array_nonempty_domain(
     return TILEDB_ERR;
 
   bool is_empty_bool;
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          tiledb::sm::serialization::nonempty_domain_deserialize(
-              array->array_.get(),
-              *buffer->buffer_,
-              (tiledb::sm::SerializationType)serialize_type,
-              nonempty_domain,
-              &is_empty_bool)))
-    return TILEDB_ERR;
+  throw_if_not_ok(tiledb::sm::serialization::nonempty_domain_deserialize(
+      array->array_.get(),
+      *buffer->buffer_,
+      (tiledb::sm::SerializationType)serialize_type,
+      nonempty_domain,
+      &is_empty_bool));
 
   *is_empty = is_empty_bool ? 1 : 0;
 
@@ -5536,13 +5217,10 @@ int32_t tiledb_deserialize_array_non_empty_domain_all_dimensions(
       sanity_check(ctx, buffer) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          tiledb::sm::serialization::nonempty_domain_deserialize(
-              array->array_.get(),
-              *buffer->buffer_,
-              (tiledb::sm::SerializationType)serialize_type)))
-    return TILEDB_ERR;
+  throw_if_not_ok(tiledb::sm::serialization::nonempty_domain_deserialize(
+      array->array_.get(),
+      *buffer->buffer_,
+      (tiledb::sm::SerializationType)serialize_type));
 
   return TILEDB_OK;
 }
@@ -5594,6 +5272,7 @@ int32_t tiledb_serialize_array_metadata(
   // Get metadata to serialize, this will load it if it does not exist
   tiledb::sm::Metadata* metadata;
   if (SAVE_ERROR_CATCH(ctx, array->array_->metadata(&metadata))) {
+    api::tiledb_buffer_free(buffer);
     return TILEDB_ERR;
   }
 
@@ -5623,14 +5302,10 @@ int32_t tiledb_deserialize_array_metadata(
     return TILEDB_ERR;
 
   // Deserialize
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          tiledb::sm::serialization::metadata_deserialize(
-              array->array_->unsafe_metadata(),
-              (tiledb::sm::SerializationType)serialize_type,
-              *(buffer->buffer_)))) {
-    return TILEDB_ERR;
-  }
+  throw_if_not_ok(tiledb::sm::serialization::metadata_deserialize(
+      array->array_->unsafe_metadata(),
+      (tiledb::sm::SerializationType)serialize_type,
+      *(buffer->buffer_)));
 
   return TILEDB_OK;
 }
@@ -5676,14 +5351,11 @@ int32_t tiledb_deserialize_query_est_result_sizes(
       sanity_check(ctx, buffer) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          tiledb::sm::serialization::query_est_result_size_deserialize(
-              query->query_,
-              (tiledb::sm::SerializationType)serialize_type,
-              client_side == 1,
-              *buffer->buffer_)))
-    return TILEDB_ERR;
+  throw_if_not_ok(tiledb::sm::serialization::query_est_result_size_deserialize(
+      query->query_,
+      (tiledb::sm::SerializationType)serialize_type,
+      client_side == 1,
+      *buffer->buffer_));
 
   return TILEDB_OK;
 }
@@ -5903,9 +5575,7 @@ int32_t tiledb_query_submit_async_func(
   std::function<void(void*)> callback =
       *reinterpret_cast<std::function<void(void*)>*>(callback_func);
 
-  if (SAVE_ERROR_CATCH(
-          ctx, query->query_->submit_async(callback, callback_data)))
-    return TILEDB_ERR;
+  throw_if_not_ok(query->query_->submit_async(callback, callback_data));
 
   return TILEDB_OK;
 }
@@ -5982,9 +5652,8 @@ int32_t tiledb_fragment_info_set_config(
     return TILEDB_ERR;
   api::ensure_config_is_valid(config);
 
-  if (SAVE_ERROR_CATCH(
-          ctx, fragment_info->fragment_info_->set_config(config->config())))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      fragment_info->fragment_info_->set_config(config->config()));
 
   return TILEDB_OK;
 }
@@ -6010,8 +5679,7 @@ int32_t tiledb_fragment_info_load(
     return TILEDB_ERR;
 
   // Load fragment info
-  if (SAVE_ERROR_CATCH(ctx, fragment_info->fragment_info_->load()))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->load());
 
   return TILEDB_OK;
 }
@@ -6027,13 +5695,10 @@ int32_t tiledb_fragment_info_load_with_key(
     return TILEDB_ERR;
 
   // Load fragment info
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->load(
-              static_cast<tiledb::sm::EncryptionType>(encryption_type),
-              encryption_key,
-              key_length)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->load(
+      static_cast<tiledb::sm::EncryptionType>(encryption_type),
+      encryption_key,
+      key_length));
 
   return TILEDB_OK;
 }
@@ -6047,9 +5712,7 @@ int32_t tiledb_fragment_info_get_fragment_name(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, fragment_info->fragment_info_->get_fragment_name(fid, name)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_fragment_name(fid, name));
 
   return TILEDB_OK;
 }
@@ -6076,9 +5739,7 @@ int32_t tiledb_fragment_info_get_fragment_uri(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, fragment_info->fragment_info_->get_fragment_uri(fid, uri)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_fragment_uri(fid, uri));
 
   return TILEDB_OK;
 }
@@ -6092,9 +5753,7 @@ int32_t tiledb_fragment_info_get_fragment_size(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, fragment_info->fragment_info_->get_fragment_size(fid, size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_fragment_size(fid, size));
 
   return TILEDB_OK;
 }
@@ -6108,9 +5767,7 @@ int32_t tiledb_fragment_info_get_dense(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, fragment_info->fragment_info_->get_dense(fid, dense)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_dense(fid, dense));
 
   return TILEDB_OK;
 }
@@ -6124,9 +5781,7 @@ int32_t tiledb_fragment_info_get_sparse(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, fragment_info->fragment_info_->get_sparse(fid, sparse)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_sparse(fid, sparse));
 
   return TILEDB_OK;
 }
@@ -6141,10 +5796,8 @@ int32_t tiledb_fragment_info_get_timestamp_range(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->get_timestamp_range(fid, start, end)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      fragment_info->fragment_info_->get_timestamp_range(fid, start, end));
 
   return TILEDB_OK;
 }
@@ -6159,11 +5812,8 @@ int32_t tiledb_fragment_info_get_non_empty_domain_from_index(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->get_non_empty_domain(
-              fid, did, domain)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      fragment_info->fragment_info_->get_non_empty_domain(fid, did, domain));
 
   return TILEDB_OK;
 }
@@ -6178,11 +5828,8 @@ int32_t tiledb_fragment_info_get_non_empty_domain_from_name(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->get_non_empty_domain(
-              fid, dim_name, domain)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_non_empty_domain(
+      fid, dim_name, domain));
 
   return TILEDB_OK;
 }
@@ -6198,11 +5845,8 @@ int32_t tiledb_fragment_info_get_non_empty_domain_var_size_from_index(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->get_non_empty_domain_var_size(
-              fid, did, start_size, end_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_non_empty_domain_var_size(
+      fid, did, start_size, end_size));
 
   return TILEDB_OK;
 }
@@ -6218,11 +5862,8 @@ int32_t tiledb_fragment_info_get_non_empty_domain_var_size_from_name(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->get_non_empty_domain_var_size(
-              fid, dim_name, start_size, end_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_non_empty_domain_var_size(
+      fid, dim_name, start_size, end_size));
 
   return TILEDB_OK;
 }
@@ -6238,11 +5879,8 @@ int32_t tiledb_fragment_info_get_non_empty_domain_var_from_index(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->get_non_empty_domain_var(
-              fid, did, start, end)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_non_empty_domain_var(
+      fid, did, start, end));
 
   return TILEDB_OK;
 }
@@ -6258,11 +5896,8 @@ int32_t tiledb_fragment_info_get_non_empty_domain_var_from_name(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->get_non_empty_domain_var(
-              fid, dim_name, start, end)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_non_empty_domain_var(
+      fid, dim_name, start, end));
 
   return TILEDB_OK;
 }
@@ -6276,9 +5911,7 @@ int32_t tiledb_fragment_info_get_mbr_num(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, fragment_info->fragment_info_->get_mbr_num(fid, mbr_num)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_mbr_num(fid, mbr_num));
 
   return TILEDB_OK;
 }
@@ -6294,9 +5927,7 @@ int32_t tiledb_fragment_info_get_mbr_from_index(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, fragment_info->fragment_info_->get_mbr(fid, mid, did, mbr)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_mbr(fid, mid, did, mbr));
 
   return TILEDB_OK;
 }
@@ -6312,9 +5943,8 @@ int32_t tiledb_fragment_info_get_mbr_from_name(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, fragment_info->fragment_info_->get_mbr(fid, mid, dim_name, mbr)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      fragment_info->fragment_info_->get_mbr(fid, mid, dim_name, mbr));
 
   return TILEDB_OK;
 }
@@ -6331,11 +5961,8 @@ int32_t tiledb_fragment_info_get_mbr_var_size_from_index(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->get_mbr_var_size(
-              fid, mid, did, start_size, end_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_mbr_var_size(
+      fid, mid, did, start_size, end_size));
 
   return TILEDB_OK;
 }
@@ -6352,11 +5979,8 @@ int32_t tiledb_fragment_info_get_mbr_var_size_from_name(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->get_mbr_var_size(
-              fid, mid, dim_name, start_size, end_size)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_mbr_var_size(
+      fid, mid, dim_name, start_size, end_size));
 
   return TILEDB_OK;
 }
@@ -6373,11 +5997,8 @@ int32_t tiledb_fragment_info_get_mbr_var_from_index(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->get_mbr_var(
-              fid, mid, did, start, end)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      fragment_info->fragment_info_->get_mbr_var(fid, mid, did, start, end));
 
   return TILEDB_OK;
 }
@@ -6394,11 +6015,8 @@ int32_t tiledb_fragment_info_get_mbr_var_from_name(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->get_mbr_var(
-              fid, mid, dim_name, start, end)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_mbr_var(
+      fid, mid, dim_name, start, end));
 
   return TILEDB_OK;
 }
@@ -6412,9 +6030,7 @@ int32_t tiledb_fragment_info_get_cell_num(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, fragment_info->fragment_info_->get_cell_num(fid, cell_num)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_cell_num(fid, cell_num));
 
   return TILEDB_OK;
 }
@@ -6427,9 +6043,7 @@ int32_t tiledb_fragment_info_get_total_cell_num(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, fragment_info->fragment_info_->get_total_cell_num(cell_num)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_total_cell_num(cell_num));
 
   return TILEDB_OK;
 }
@@ -6443,9 +6057,7 @@ int32_t tiledb_fragment_info_get_version(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, fragment_info->fragment_info_->get_version(fid, version)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_version(fid, version));
 
   return TILEDB_OK;
 }
@@ -6459,10 +6071,8 @@ int32_t tiledb_fragment_info_has_consolidated_metadata(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->has_consolidated_metadata(fid, has)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      fragment_info->fragment_info_->has_consolidated_metadata(fid, has));
 
   return TILEDB_OK;
 }
@@ -6503,9 +6113,7 @@ int32_t tiledb_fragment_info_get_to_vacuum_uri(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx, fragment_info->fragment_info_->get_to_vacuum_uri(fid, uri)))
-    return TILEDB_ERR;
+  throw_if_not_ok(fragment_info->fragment_info_->get_to_vacuum_uri(fid, uri));
 
   return TILEDB_OK;
 }
@@ -6551,11 +6159,8 @@ int32_t tiledb_fragment_info_get_array_schema_name(
       sanity_check(ctx, fragment_info) == TILEDB_ERR)
     return TILEDB_ERR;
 
-  if (SAVE_ERROR_CATCH(
-          ctx,
-          fragment_info->fragment_info_->get_array_schema_name(
-              fid, schema_name)))
-    return TILEDB_ERR;
+  throw_if_not_ok(
+      fragment_info->fragment_info_->get_array_schema_name(fid, schema_name));
 
   assert(schema_name != nullptr);
 
