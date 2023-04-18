@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>c_api_structure</title>
+<title>Float Scaling Filter</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -99,7 +99,7 @@ ul.task-list li input[type="checkbox"] {
     </nav>
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title"></h1>
+      <h1 class="quarto-secondary-nav-title">Float Scaling Filter</h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -226,17 +226,10 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#structure-of-the-c-api" id="toc-structure-of-the-c-api" class="nav-link active" data-scroll-target="#structure-of-the-c-api">Structure of the C API</a>
+  <li><a href="#float-scaling-filter" id="toc-float-scaling-filter" class="nav-link active" data-scroll-target="#float-scaling-filter">Float Scaling Filter</a>
   <ul class="collapse">
-  <li><a href="#layers" id="toc-layers" class="nav-link" data-scroll-target="#layers">Layers</a>
-  <ul class="collapse">
-  <li><a href="#public-api-functions" id="toc-public-api-functions" class="nav-link" data-scroll-target="#public-api-functions">Public API functions</a></li>
-  <li><a href="#api-implementation-functions" id="toc-api-implementation-functions" class="nav-link" data-scroll-target="#api-implementation-functions">API implementation functions</a></li>
-  <li><a href="#handle-classes" id="toc-handle-classes" class="nav-link" data-scroll-target="#handle-classes">Handle classes</a></li>
-  <li><a href="#facade-classes" id="toc-facade-classes" class="nav-link" data-scroll-target="#facade-classes">Facade classes</a></li>
-  <li><a href="#proxy-classes" id="toc-proxy-classes" class="nav-link" data-scroll-target="#proxy-classes">Proxy classes</a></li>
-  </ul></li>
-  <li><a href="#implementation-restrictions" id="toc-implementation-restrictions" class="nav-link" data-scroll-target="#implementation-restrictions">Implementation restrictions</a></li>
+  <li><a href="#filter-enum-value" id="toc-filter-enum-value" class="nav-link" data-scroll-target="#filter-enum-value">Filter Enum Value</a></li>
+  <li><a href="#input-and-output-layout" id="toc-input-and-output-layout" class="nav-link" data-scroll-target="#input-and-output-layout">Input and Output Layout</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -244,51 +237,39 @@ ul.task-list li input[type="checkbox"] {
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">Float Scaling Filter</h1>
+</div>
 
 
-<section id="structure-of-the-c-api" class="level1">
-<h1>Structure of the C API</h1>
-<section id="layers" class="level2">
-<h2 class="anchored" data-anchor-id="layers">Layers</h2>
-<p>The C API consists of layers starting with the API functions themselves and ending with classes that call into the non-API parts of the core library. There are five layers, each with its own responsibilities.</p>
-<section id="public-api-functions" class="level3">
-<h3 class="anchored" data-anchor-id="public-api-functions">Public API functions</h3>
-<p>Public API functions themselves are declared with <code>extern "C"</code> linkage. They are implemented as wrappers around an API implementation function. There is a one-to-one relationship between public API functions and API implementation functions.</p>
-<p>Public API functions are responsible for uniform error processing through handling exceptions. The wrapper provides uniformity of behavior for (1) return values, (2) logging format, (3) error return. Non-uniform error handling may be done outside this layer, although that’s not usually necessary.</p>
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="float-scaling-filter" class="level2">
+<h2 class="anchored" data-anchor-id="float-scaling-filter">Float Scaling Filter</h2>
+<p>The float scale filter converts floating point type data to integer data after first shifting and scaling the data. It is a lossy filter that is often used in combination with other filters that perform well on integer data. The float scale filter stores its input data (with floating point type) as integer values for more compressed storage. For example, given <code>data</code> as a NumPy float64 array, with scale/offset parameters, and a specified byte width of 4: ``` data = np.random.rand(npts) data_b = data.view(np.float64) new_data_b = np.zeros(npts, dtype=np.int32) # byte width is 4 scale, offset</p>
+<p>for i in range(0, len(data)): # round works like <cmath>’s round new_data_b[i] = round((data_b[i] - offset) / scale) ```</cmath></p>
+<p>On read, the float scaling filter will reverse the scale factor and offset, restoring the original floating point data, with a potential loss of precision. Given the previous example: <code>restored_data = np.zeros(npts, dtype=np.float64)    for i in range(0, len(data)):      restored_data[i] = (new_data_b[i] * scale) + offset</code></p>
+<p>Here’s a small example of the float scaling filter’s behavior on write, then read. Given the parameters <code>scale = 0.25</code>, <code>offset = 10.0</code>, and <code>byte_size = 2</code>, this is how the data is stored and retrieved.</p>
+<pre><code>  input_data (double) = [10.0, 10.2500, 10.7540, 11.0001]
+  stored_data (16 bit integer) = [0, 1, 3, 4]
+  output_data (double) = [10.0, 10.2500, 10.7500, 11.0]</code></pre>
+<section id="filter-enum-value" class="level3">
+<h3 class="anchored" data-anchor-id="filter-enum-value">Filter Enum Value</h3>
+<p>The filter enum value for the float scaling filter is <code>15</code> (TILEDB_FILTER_SCALE_FLOAT enum).</p>
 </section>
-<section id="api-implementation-functions" class="level3">
-<h3 class="anchored" data-anchor-id="api-implementation-functions">API implementation functions</h3>
-<p>API implementation functions translate C calling sequences into C++ calling sequences. At the foundation is translating between C-style pointers and C++ objects. This is sometimes much more than simple argument translation. This translation may require conversion between the differing lifespans of core objects and API-visible objects that allow access to them. Different classes may be used to represent the same kind of core object, depending on life cycle; API implementation functions are responsible for selecting the correct one.</p>
-<p>These functions are the first line for argument validation. They have principal responsibility for the ways that argument may be invalid as C arguments, the most notable of which is null pointers. They have secondary responsibility for validating arguments in other ways; in these cases the underlying classes have the primary responsibility.</p>
-<p>These functions have primary responsibility for memory allocation of API-visible objects. The legacy pattern was raw <code>new</code> and <code>delete</code> with explicit error recovery. The new pattern is to use a handle class. Once the conversion to handles is complete, it won’t be necessary to state that memory is a responsibility here.</p>
-</section>
-<section id="handle-classes" class="level3">
-<h3 class="anchored" data-anchor-id="handle-classes">Handle classes</h3>
-<p>Handle classes manage memory allocation for API-visible objects, deriving from a generic <code>class api:handle</code> base class. Handle classes hide the details of memory allocation from API implementation functions</p>
-<p>Handles are carriers for facade instances. There’s a one-to-one relationship between a handle class and a facade base class (see below). Handle classes forward all functions used by implementation functions to the facade.</p>
-<p>There’s a one-to-one relationship between handle objects and facade objects. Handles are constructed carrying facades, and facades are not created unless through a handle.</p>
-<p>An API implementation function may not naively assume that an argument pointer to a C API function is a valid pointer to a handle; such an assumption constitutes a security risk. Associated with each handle type is a warehouse function (parallel to a factory function) that converts an API argument pointer into a facade pointer. At root this is simply getting the pointer value, but the warehouse function may refuse a request for an unknown object.</p>
-<p><strong>[Future]</strong> Handle classes are the nexus for API object registration, a facility that keeps track of all outstanding objects obtained through the C API.</p>
-</section>
-<section id="facade-classes" class="level3">
-<h3 class="anchored" data-anchor-id="facade-classes">Facade classes</h3>
-<p>Facade classes present a uniform interface to core objects regardless of the life cycle of the object. In particular, there’s a difference between newly-created objects, such as those created with <code>*_alloc</code> functions, and pre-existing objects, such as those retrieved from aggregates like an array schema. Thus facade classes generally derive from an abstract base class and implement them in accordance with life cycle concerns.</p>
-<p>The motivation for this structure is to be able to interconvert between C.41-compliant core objects and a C.41-hostile set C API functions. Depending on lifecycle state, some operations may be prohibited. For example, array schema data is considered immutable once it’s been created, so <code>set_*</code> C API functions must fail on objects that have been (C.41 fully-) constructed and must succeed on “pre-construction” objects (those that have been constructed in the C API but not yet constructed in core).</p>
-<p>For each facade base class, there’s an optional proxy class, that is, a <code>{0,1}</code> to <code>1</code> relationship. If there’s an <code>*_alloc</code> function in the C API, there will be a proxy class, but otherwise there need not be one.</p>
-</section>
-<section id="proxy-classes" class="level3">
-<h3 class="anchored" data-anchor-id="proxy-classes">Proxy classes</h3>
-<p>A proxy class represent a C API object that is newly created by collecting constructor arguments through API <code>set_</code> calls.</p>
-</section>
-</section>
-<section id="implementation-restrictions" class="level2">
-<h2 class="anchored" data-anchor-id="implementation-restrictions">Implementation restrictions</h2>
-<ul>
-<li><p>In order to facilitate correct SWIG wrapper generation, non-TileDB headers included by the external header files <em>must</em> be wrapped as follows:</p>
-<pre><code>#ifndef TILEDB_CAPI_WRAPPING
-#include &lt;stdint.h&gt;
-#endif</code></pre></li>
-</ul>
+<section id="input-and-output-layout" class="level3">
+<h3 class="anchored" data-anchor-id="input-and-output-layout">Input and Output Layout</h3>
+<p>The input data layout will be an array of floating point numbers. The output data layout will be an array of integer numbers with the pre-specified byte width.</p>
 
 
 </section>

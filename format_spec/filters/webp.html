@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>c_api_structure</title>
+<title>WEBP Filter</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -99,7 +99,7 @@ ul.task-list li input[type="checkbox"] {
     </nav>
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title"></h1>
+      <h1 class="quarto-secondary-nav-title">WEBP Filter</h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -226,72 +226,57 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#structure-of-the-c-api" id="toc-structure-of-the-c-api" class="nav-link active" data-scroll-target="#structure-of-the-c-api">Structure of the C API</a>
-  <ul class="collapse">
-  <li><a href="#layers" id="toc-layers" class="nav-link" data-scroll-target="#layers">Layers</a>
-  <ul class="collapse">
-  <li><a href="#public-api-functions" id="toc-public-api-functions" class="nav-link" data-scroll-target="#public-api-functions">Public API functions</a></li>
-  <li><a href="#api-implementation-functions" id="toc-api-implementation-functions" class="nav-link" data-scroll-target="#api-implementation-functions">API implementation functions</a></li>
-  <li><a href="#handle-classes" id="toc-handle-classes" class="nav-link" data-scroll-target="#handle-classes">Handle classes</a></li>
-  <li><a href="#facade-classes" id="toc-facade-classes" class="nav-link" data-scroll-target="#facade-classes">Facade classes</a></li>
-  <li><a href="#proxy-classes" id="toc-proxy-classes" class="nav-link" data-scroll-target="#proxy-classes">Proxy classes</a></li>
-  </ul></li>
-  <li><a href="#implementation-restrictions" id="toc-implementation-restrictions" class="nav-link" data-scroll-target="#implementation-restrictions">Implementation restrictions</a></li>
-  </ul></li>
+  <li><a href="#filter-enum-value" id="toc-filter-enum-value" class="nav-link active" data-scroll-target="#filter-enum-value">Filter Enum Value</a></li>
+  <li><a href="#input-and-output-layout" id="toc-input-and-output-layout" class="nav-link" data-scroll-target="#input-and-output-layout">Input and Output Layout</a></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">WEBP Filter</h1>
+</div>
 
 
-<section id="structure-of-the-c-api" class="level1">
-<h1>Structure of the C API</h1>
-<section id="layers" class="level2">
-<h2 class="anchored" data-anchor-id="layers">Layers</h2>
-<p>The C API consists of layers starting with the API functions themselves and ending with classes that call into the non-API parts of the core library. There are five layers, each with its own responsibilities.</p>
-<section id="public-api-functions" class="level3">
-<h3 class="anchored" data-anchor-id="public-api-functions">Public API functions</h3>
-<p>Public API functions themselves are declared with <code>extern "C"</code> linkage. They are implemented as wrappers around an API implementation function. There is a one-to-one relationship between public API functions and API implementation functions.</p>
-<p>Public API functions are responsible for uniform error processing through handling exceptions. The wrapper provides uniformity of behavior for (1) return values, (2) logging format, (3) error return. Non-uniform error handling may be done outside this layer, although that’s not usually necessary.</p>
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<p>The WebP filter compresses image data using <a href="https://developers.google.com/speed/webp/docs/api#headers_and_libraries">libwebp</a>. The current input formats supported are <code>RGB</code>, <code>RGBA</code>, <code>BGR</code>, and <code>BGRA</code>. The colorspace format can be configured for this filter by setting the <code>TILEDB_WEBP_INPUT_FORMAT</code> filter option. Tile-based compression is determined by dimension extents. Extents equal to dimension bounds will compress the image in one pass.</p>
+<p>For attributes, the WebP filter supports only the uint8_t data type. Dimension data types can be any two matching integral types, such as <code>{uint32_t, uint32_t}</code> or <code>{int64_t, int64_t}</code> for example.</p>
+<pre><code># Data from 2x3 pixel image
+input = [[255,62,83, 149,43,67, 138,43,67]
+         [255,62,83, 149,43,67, 138,43,67]]
+# Ingest and read with lossless compression
+output = [[255,62,83, 149,43,67, 138,43,67]
+          [255,62,83, 149,43,67, 138,43,67]]
+# Ingest and read with lossy compression
+output = [[251,60,84, 148,51,61, 142,42,64]
+          [252,63,85, 150,46,67, 139,44,68]]</code></pre>
+<p>The figure below from WebP API documentation may help to understand the format of data passed to and read from the WebP filter.</p>
+<p><img src="../figures/bgra_layout.png" class="img-fluid"><br>
+<a href="https://developers.google.com/static/speed/webp/images/image_layout.png">Photo</a> by <a href="https://developers.google.com/speed/webp/docs/api">Google</a> licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p>
+<p>Using the figure above from <a href="https://developers.google.com/speed/webp/docs/api">WebP API documentation</a>, <code>height</code> should correspond with dimension 0 upper bound, while <code>stride</code> corresponds with dimension 1 upper bound. The pixel <code>width</code> of the image is internally calculated based on colorspace format and tile extents.</p>
+<p>Tile extents are used to configure tile-based compression. We should note that the <a href="https://developers.google.com/speed/webp/faq#what_is_the_maximum_size_a_webp_image_can_be">maximum WebP image size</a> is 16383x16383. Because of this, our extents can not exceed <code>16383</code> for dimension 0, and <code>16383 * pixel_depth</code> for dimension 1. <code>pixel_depth</code> is defined by our colorspace format selection. <code>RGB</code> and <code>BGR</code> images have a depth of 3, while <code>RGBA</code> and <code>BGRA</code> have a depth of 4 for the additional alpha value provided for each pixel.</p>
+<section id="filter-enum-value" class="level1">
+<h1>Filter Enum Value</h1>
+<p>The filter enum value for the WEBP filter is <code>17</code> (TILEDB_FILTER_WEBP enum).</p>
 </section>
-<section id="api-implementation-functions" class="level3">
-<h3 class="anchored" data-anchor-id="api-implementation-functions">API implementation functions</h3>
-<p>API implementation functions translate C calling sequences into C++ calling sequences. At the foundation is translating between C-style pointers and C++ objects. This is sometimes much more than simple argument translation. This translation may require conversion between the differing lifespans of core objects and API-visible objects that allow access to them. Different classes may be used to represent the same kind of core object, depending on life cycle; API implementation functions are responsible for selecting the correct one.</p>
-<p>These functions are the first line for argument validation. They have principal responsibility for the ways that argument may be invalid as C arguments, the most notable of which is null pointers. They have secondary responsibility for validating arguments in other ways; in these cases the underlying classes have the primary responsibility.</p>
-<p>These functions have primary responsibility for memory allocation of API-visible objects. The legacy pattern was raw <code>new</code> and <code>delete</code> with explicit error recovery. The new pattern is to use a handle class. Once the conversion to handles is complete, it won’t be necessary to state that memory is a responsibility here.</p>
-</section>
-<section id="handle-classes" class="level3">
-<h3 class="anchored" data-anchor-id="handle-classes">Handle classes</h3>
-<p>Handle classes manage memory allocation for API-visible objects, deriving from a generic <code>class api:handle</code> base class. Handle classes hide the details of memory allocation from API implementation functions</p>
-<p>Handles are carriers for facade instances. There’s a one-to-one relationship between a handle class and a facade base class (see below). Handle classes forward all functions used by implementation functions to the facade.</p>
-<p>There’s a one-to-one relationship between handle objects and facade objects. Handles are constructed carrying facades, and facades are not created unless through a handle.</p>
-<p>An API implementation function may not naively assume that an argument pointer to a C API function is a valid pointer to a handle; such an assumption constitutes a security risk. Associated with each handle type is a warehouse function (parallel to a factory function) that converts an API argument pointer into a facade pointer. At root this is simply getting the pointer value, but the warehouse function may refuse a request for an unknown object.</p>
-<p><strong>[Future]</strong> Handle classes are the nexus for API object registration, a facility that keeps track of all outstanding objects obtained through the C API.</p>
-</section>
-<section id="facade-classes" class="level3">
-<h3 class="anchored" data-anchor-id="facade-classes">Facade classes</h3>
-<p>Facade classes present a uniform interface to core objects regardless of the life cycle of the object. In particular, there’s a difference between newly-created objects, such as those created with <code>*_alloc</code> functions, and pre-existing objects, such as those retrieved from aggregates like an array schema. Thus facade classes generally derive from an abstract base class and implement them in accordance with life cycle concerns.</p>
-<p>The motivation for this structure is to be able to interconvert between C.41-compliant core objects and a C.41-hostile set C API functions. Depending on lifecycle state, some operations may be prohibited. For example, array schema data is considered immutable once it’s been created, so <code>set_*</code> C API functions must fail on objects that have been (C.41 fully-) constructed and must succeed on “pre-construction” objects (those that have been constructed in the C API but not yet constructed in core).</p>
-<p>For each facade base class, there’s an optional proxy class, that is, a <code>{0,1}</code> to <code>1</code> relationship. If there’s an <code>*_alloc</code> function in the C API, there will be a proxy class, but otherwise there need not be one.</p>
-</section>
-<section id="proxy-classes" class="level3">
-<h3 class="anchored" data-anchor-id="proxy-classes">Proxy classes</h3>
-<p>A proxy class represent a C API object that is newly created by collecting constructor arguments through API <code>set_</code> calls.</p>
-</section>
-</section>
-<section id="implementation-restrictions" class="level2">
-<h2 class="anchored" data-anchor-id="implementation-restrictions">Implementation restrictions</h2>
-<ul>
-<li><p>In order to facilitate correct SWIG wrapper generation, non-TileDB headers included by the external header files <em>must</em> be wrapped as follows:</p>
-<pre><code>#ifndef TILEDB_CAPI_WRAPPING
-#include &lt;stdint.h&gt;
-#endif</code></pre></li>
-</ul>
+<section id="input-and-output-layout" class="level1">
+<h1>Input and Output Layout</h1>
+<p>Input is a single array of colorspace values in RGB, BGR, RGBA, or BGRA format. For RGB format we would expect the first pixel to store R, G, B values at <code>input[0]</code>, <code>input[1]</code>, and <code>input[2]</code> respectively, followed by the remaining pixels in the image. Ingesting a 10x10 image would expect 300 total input values for 10 rows of 30 colorspace values per-row.</p>
+<p>Output is organized the same as input. If we compress an image with lossless enabled, all outputs match inputs exactly. If we instead use lossy compression with a quality of 0, output colorspace values will vary due to data lost during lossy WebP compression but the organization of the data remains the same.</p>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.1.251">
+<meta name="generator" content="quarto-1.2.475">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -83,13 +83,16 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="https://tiledb.com">Home page</a>
+    <a class="nav-link" href="https://tiledb.com">
+ <span class="menu-text">Home page</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="https://tiledb.com/contact">Contact us</a>
+    <a class="nav-link" href="https://tiledb.com/contact">
+ <span class="menu-text">Contact us</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="https://github.com/TileDB-Inc/TileDB">Repo</a>
+    <a class="nav-link" href="https://github.com/TileDB-Inc/TileDB">
+ <span class="menu-text">Repo</span></a>
   </li>  
 </ul>
               <div id="quarto-search" class="" title="Search"></div>
@@ -231,6 +234,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#domain" id="toc-domain" class="nav-link" data-scroll-target="#domain">Domain</a></li>
   <li><a href="#dimension" id="toc-dimension" class="nav-link" data-scroll-target="#dimension">Dimension</a></li>
   <li><a href="#attribute" id="toc-attribute" class="nav-link" data-scroll-target="#attribute">Attribute</a></li>
+  <li><a href="#dimension-label" id="toc-dimension-label" class="nav-link" data-scroll-target="#dimension-label">Dimension Label</a></li>
   </ul>
 </nav>
     </div>
@@ -247,6 +251,7 @@ ul.task-list li input[type="checkbox"] {
 <div class="quarto-title-meta">
 
     
+  
     
   </div>
   
@@ -260,7 +265,7 @@ ul.task-list li input[type="checkbox"] {
    |  ...
    |_ __schema                      # array schema folder
          |_ &lt;timestamped_name&gt;      # array schema file
-         |_ ...  </code></pre>
+         |_ ...</code></pre>
 <p><code>&lt;timestamped_name&gt;</code> has format <code>__timestamp_timestamp_uuid</code>, where: * <code>timestamp</code> is timestamp in milliseconds elapsed since 1970-01-01 00:00:00 +0000 (UTC) * <code>uuid</code> is a unique identifier</p>
 <p>The array schema folder can contain:</p>
 <ul>
@@ -357,6 +362,26 @@ ul.task-list li input[type="checkbox"] {
 <td style="text-align: left;"><a href="#attribute">Attribute</a></td>
 <td style="text-align: left;">Nth attribute</td>
 </tr>
+<tr class="odd">
+<td style="text-align: left;">Num labels</td>
+<td style="text-align: left;"><code>uint32_t</code></td>
+<td style="text-align: left;">Number of dimension labels in the array</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Label 1</td>
+<td style="text-align: left;"><a href="#dimension_label">Dimension Label</a></td>
+<td style="text-align: left;">First dimension label</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">…</td>
+<td style="text-align: left;">…</td>
+<td style="text-align: left;">…</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Label N</td>
+<td style="text-align: left;"><a href="#dimension_label">Dimension Label</a></td>
+<td style="text-align: left;">Nth dimension label</td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -414,7 +439,7 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 <tr class="even">
 <td style="text-align: left;">Dimension name</td>
-<td style="text-align: left;"><code>char[]</code></td>
+<td style="text-align: left;"><code>uint8_t[]</code></td>
 <td style="text-align: left;">Dimension name character array</td>
 </tr>
 <tr class="odd">
@@ -474,7 +499,7 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 <tr class="even">
 <td style="text-align: left;">Attribute name</td>
-<td style="text-align: left;"><code>char[]</code></td>
+<td style="text-align: left;"><code>uint8_t[]</code></td>
 <td style="text-align: left;">Attribute name character array</td>
 </tr>
 <tr class="odd">
@@ -511,6 +536,106 @@ ul.task-list li input[type="checkbox"] {
 <td style="text-align: left;">Fill value validity</td>
 <td style="text-align: left;"><code>uint8_t</code></td>
 <td style="text-align: left;">The validity fill value</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Order</td>
+<td style="text-align: left;"><code>uint8_t</code></td>
+<td style="text-align: left;">Order of the data stored in the attribute. This may be unordered, increasing or decreasing</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="dimension-label" class="level2">
+<h2 class="anchored" data-anchor-id="dimension-label">Dimension Label</h2>
+<p>The dimension label has internal format:</p>
+<table class="table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 19%">
+<col style="width: 29%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Field</strong></th>
+<th style="text-align: left;"><strong>Type</strong></th>
+<th style="text-align: left;"><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Dimension index</td>
+<td style="text-align: left;"><code>uint32_t</code></td>
+<td style="text-align: left;">Index of the dimension the label is for</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Label order</td>
+<td style="text-align: left;"><code>uint8_t</code></td>
+<td style="text-align: left;">Order of the label data</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dimension label name length</td>
+<td style="text-align: left;"><code>uint64_t</code></td>
+<td style="text-align: left;">Number of characters in the dimension label name</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Dimension label name</td>
+<td style="text-align: left;"><code>uint8_t []</code></td>
+<td style="text-align: left;">The name of the dimension label</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Relative URI</td>
+<td style="text-align: left;"><code>uint8_t</code></td>
+<td style="text-align: left;">If the URI of the array the label data is stored in is relative to this array</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">URI length</td>
+<td style="text-align: left;"><code>uint64_t</code></td>
+<td style="text-align: left;">The number of characters in the URI</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">URI</td>
+<td style="text-align: left;"><code>uint8_t []</code></td>
+<td style="text-align: left;">The URI the label data is stored in</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Label attribute name length</td>
+<td style="text-align: left;"><code>uint32_t</code></td>
+<td style="text-align: left;">The length of the attribute name of the label data</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Label attribute name</td>
+<td style="text-align: left;"><code>uint8_t []</code></td>
+<td style="text-align: left;">The name of the attribute the label data is stored in</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Label datatype</td>
+<td style="text-align: left;"><code>uint8_t</code></td>
+<td style="text-align: left;">The datatype of the label data</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Label cell_val_num</td>
+<td style="text-align: left;"><code>uint32_t</code></td>
+<td style="text-align: left;">The number of values per cell of the label data. For variable-length labels, this is <code>std::numeric_limits&lt;uint32_t&gt;::max()</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Label domain size</td>
+<td style="text-align: left;"><code>uint64_t</code></td>
+<td style="text-align: left;">The size of the label domain</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Label domain start size</td>
+<td style="text-align: left;"><code>uint64_t</code></td>
+<td style="text-align: left;">The size of the first value of the domain for variable-lenght datatypes. For fixed-lenght labels, this is 0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Label domain data</td>
+<td style="text-align: left;"><code>uint8_t[]</code></td>
+<td style="text-align: left;">Byte array of length equal to domain size above, storing the min, max values of the dimension</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Is external</td>
+<td style="text-align: left;"><code>uint8_t</code></td>
+<td style="text-align: left;">If the URI is not stored as part of this array</td>
 </tr>
 </tbody>
 </table>
@@ -560,7 +685,24 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     button.classList.add('code-copy-button-checked');
     var currentTitle = button.getAttribute("title");
     button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
     setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
       button.setAttribute("title", currentTitle);
       button.classList.remove('code-copy-button-checked');
     }, 1000);
@@ -596,24 +738,42 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       return note.innerHTML;
     });
   }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
   var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
   for (var i=0; i<bibliorefs.length; i++) {
     const ref = bibliorefs[i];
-    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
-    tippyHover(ref, function() {
-      var popup = window.document.createElement('div');
-      cites.forEach(function(cite) {
-        var citeDiv = window.document.createElement('div');
-        citeDiv.classList.add('hanging-indent');
-        citeDiv.classList.add('csl-entry');
-        var biblioDiv = window.document.getElementById('ref-' + cite);
-        if (biblioDiv) {
-          citeDiv.innerHTML = biblioDiv.innerHTML;
-        }
-        popup.appendChild(citeDiv);
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
       });
-      return popup.innerHTML;
-    });
+    }
   }
 });
 </script>

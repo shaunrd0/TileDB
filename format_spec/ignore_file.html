@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.1.251">
+<meta name="generator" content="quarto-1.2.475">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -81,13 +81,16 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="https://tiledb.com">Home page</a>
+    <a class="nav-link" href="https://tiledb.com">
+ <span class="menu-text">Home page</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="https://tiledb.com/contact">Contact us</a>
+    <a class="nav-link" href="https://tiledb.com/contact">
+ <span class="menu-text">Contact us</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="https://github.com/TileDB-Inc/TileDB">Repo</a>
+    <a class="nav-link" href="https://github.com/TileDB-Inc/TileDB">
+ <span class="menu-text">Repo</span></a>
   </li>  
 </ul>
               <div id="quarto-search" class="" title="Search"></div>
@@ -234,6 +237,7 @@ ul.task-list li input[type="checkbox"] {
 <div class="quarto-title-meta">
 
     
+  
     
   </div>
   
@@ -253,6 +257,8 @@ ul.task-list li input[type="checkbox"] {
 <li><code>v</code> is the format version</li>
 </ul>
 <p>The ignore file is a simple text file where each line contains a URI string. The URI is the relative URI based on the top level array URI.</p>
+<p>Ignored files are used to specify commit files that should be ignored. The timestamps for the file is used to identify the timestamp range that is included inside of the file (with the smaller/bigger timestamp from contained elements). That way if an array is opened at a time that doesn’t intersect the timestamp range of the file, it can be omitted. All ignore files that intersect the array open start/end times will be loaded when the array is opened. There are a few situations where those files are required, all linked to <a href="../format_spec/consolidated_commits_file.html">consolidated commits files</a>. One of them is when fragments are vacuumed after consolidation. If any fragments were included a consolidated commits file, they now should be added to an ignore file so that the system doesn’t try to load that fragments. Another is when a fragment that is included in a consolidated commits file is deleted, it needs to be added to an ignore file so that the array can still be opened.</p>
+<p>Once a new consolidated commits file get generated, it will not include any of the fragments that were deleted or vacuumed. At that point, the ignore files and the other consolidated commits files can be vacuumed.</p>
 <table class="table">
 <colgroup>
 <col style="width: 33%">
@@ -329,7 +335,24 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     button.classList.add('code-copy-button-checked');
     var currentTitle = button.getAttribute("title");
     button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
     setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
       button.setAttribute("title", currentTitle);
       button.classList.remove('code-copy-button-checked');
     }, 1000);
@@ -365,24 +388,42 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       return note.innerHTML;
     });
   }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
   var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
   for (var i=0; i<bibliorefs.length; i++) {
     const ref = bibliorefs[i];
-    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
-    tippyHover(ref, function() {
-      var popup = window.document.createElement('div');
-      cites.forEach(function(cite) {
-        var citeDiv = window.document.createElement('div');
-        citeDiv.classList.add('hanging-indent');
-        citeDiv.classList.add('csl-entry');
-        var biblioDiv = window.document.getElementById('ref-' + cite);
-        if (biblioDiv) {
-          citeDiv.innerHTML = biblioDiv.innerHTML;
-        }
-        popup.appendChild(citeDiv);
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
       });
-      return popup.innerHTML;
-    });
+    }
   }
 });
 </script>
