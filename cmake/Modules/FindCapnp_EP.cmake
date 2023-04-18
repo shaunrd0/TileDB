@@ -63,16 +63,6 @@ if (NOT CAPNP_FOUND)
   if (TILEDB_SUPERBUILD)
     message(STATUS "Adding Capnp as an external project")
 
-    if (WIN32)
-      find_package(Git REQUIRED)
-      set(CONDITIONAL_PATCH 
-           cd ${CMAKE_SOURCE_DIR} && 
-           ${GIT_EXECUTABLE} apply --ignore-whitespace -p1 --unsafe-paths --verbose --directory=${TILEDB_EP_SOURCE_DIR}/ep_capnp < ${TILEDB_CMAKE_INPUTS_DIR}/patches/ep_capnp/capnp_CMakeLists.txt.patch &&
-           ${GIT_EXECUTABLE} apply --ignore-whitespace -p1 --unsafe-paths --verbose --directory=${TILEDB_EP_SOURCE_DIR}/ep_capnp < ${TILEDB_CMAKE_INPUTS_DIR}/patches/ep_capnp/windows-sanity.h.patch)
-    else()
-      set(CONDITIONAL_PATCH "")
-    endif()
-
     ExternalProject_Add(ep_capnp
        PREFIX "externals"
        DOWNLOAD_NAME ep_capnp.${TILEDB_CAPNPROTO_VERSION}.tar.gz
@@ -85,8 +75,6 @@ if (NOT CAPNP_FOUND)
          -DBUILD_TESTING=OFF
          -DCMAKE_POSITION_INDEPENDENT_CODE=ON
          -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
-       PATCH_COMMAND
-         ${CONDITIONAL_PATCH}
        LOG_DOWNLOAD TRUE
        LOG_CONFIGURE TRUE
        LOG_BUILD TRUE
