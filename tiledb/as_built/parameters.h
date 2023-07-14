@@ -1,11 +1,11 @@
-/*
- * @file   version.h
+/**
+ * @file   parameters.h
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2017-2021 TileDB, Inc.
+ * @copyright Copyright (c) 2017-2023 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,33 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
+ *
+ * @section DESCRIPTION
+ *
+ * This file describes the parameters of the already-built TileDB
+ * build configuration.
  */
 
-#define TILEDB_VERSION_MAJOR 2
-#define TILEDB_VERSION_MINOR 17
-#define TILEDB_VERSION_PATCH 0
+#ifndef TILEDB_PARAMETERS_H
+#define TILEDB_PARAMETERS_H
+
+#include "tiledb/as_built/storage_backends.h"
+#include "tiledb/as_built/support.h"
+
+using json = nlohmann::json;
+
+namespace tiledb::as_built::parameters {
+
+/* ********************************* */
+/*                API                */
+/* ********************************* */
+class parameters {};
+
+void to_json(json& j, const parameters&) {
+  j = {
+      {"storage_backends", storage_backends::storage_backends()},
+      {"support", support::support()}};
+}
+
+}  // namespace tiledb::as_built::parameters
+#endif  // TILEDB_PARAMETERS_H

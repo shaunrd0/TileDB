@@ -1,11 +1,11 @@
-/*
- * @file   version.h
+/**
+ * @file   as_built.h
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2017-2021 TileDB, Inc.
+ * @copyright Copyright (c) 2017-2023 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,34 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
+ *
+ * @section DESCRIPTION
+ *
+ * This file describes the already-built TileDB build configuration.
  */
 
-#define TILEDB_VERSION_MAJOR 2
-#define TILEDB_VERSION_MINOR 17
-#define TILEDB_VERSION_PATCH 0
+#ifndef TILEDB_AS_BUILT_H
+#define TILEDB_AS_BUILT_H
+
+#include "tiledb/as_built/parameters.h"
+
+using json = nlohmann::json;
+
+namespace tiledb::as_built {
+
+/* ********************************* */
+/*                API                */
+/* ********************************* */
+class library_reflection {};
+
+void to_json(json& j, const library_reflection&) {
+  j = {{"as_built", {{"parameters", parameters::parameters()}}}};
+}
+
+std::string dump() {
+  json j = library_reflection();
+  return j.dump(2);
+}
+
+}  // namespace tiledb::as_built
+#endif  // TILEDB_AS_BUILT_H

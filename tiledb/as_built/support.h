@@ -1,11 +1,11 @@
-/*
- * @file   version.h
+/**
+ * @file   support.h
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2017-2021 TileDB, Inc.
+ * @copyright Copyright (c) 2017-2023 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,39 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
+ *
+ * @section DESCRIPTION
+ *
+ * This file describes the support parameters of the already-built TileDB
+ * build configuration.
  */
 
-#define TILEDB_VERSION_MAJOR 2
-#define TILEDB_VERSION_MINOR 17
-#define TILEDB_VERSION_PATCH 0
+#ifndef TILEDB_SUPPORT_H
+#define TILEDB_SUPPORT_H
+
+#include "external/include/nlohmann/json.hpp"
+
+using json = nlohmann::json;
+
+namespace tiledb::as_built::parameters::support {
+
+/* ********************************* */
+/*              ATTRIBUTES           */
+/* ********************************* */
+#ifdef TILEDB_SERIALIZATION
+static constexpr bool serialization = true;
+#else
+static constexpr bool serialization = false;
+#endif  // TILEDB_SERIALIZATION
+
+/* ********************************* */
+/*                API                */
+/* ********************************* */
+class support {};
+
+void to_json(json& j, const support&) {
+  j = {{"serialization", {{"enabled", serialization}}}};
+}
+
+}  // namespace tiledb::as_built::parameters::support
+#endif  // TILEDB_SUPPORT_H
