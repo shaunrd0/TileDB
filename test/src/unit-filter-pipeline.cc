@@ -159,7 +159,7 @@ class Add1InPlace : public tiledb::sm::Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      Datatype datatype) const override {
+      Datatype) const override {
     auto input_size = input->size();
     RETURN_NOT_OK(output->append_view(input));
     output->reset_offset();
@@ -185,7 +185,7 @@ class Add1InPlace : public tiledb::sm::Filter {
       FilterBuffer* output_metadata,
       FilterBuffer* output,
       const tiledb::sm::Config& config,
-      Datatype datatype) const override {
+      Datatype) const override {
     (void)config;
 
     auto input_size = input->size();
@@ -232,7 +232,7 @@ class Add1OutOfPlace : public tiledb::sm::Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      Datatype datatype) const override {
+      Datatype) const override {
     auto input_size = input->size();
     auto nelts = input_size / sizeof(uint64_t);
 
@@ -269,7 +269,7 @@ class Add1OutOfPlace : public tiledb::sm::Filter {
       FilterBuffer* output_metadata,
       FilterBuffer* output,
       const tiledb::sm::Config& config,
-      Datatype datatype) const override {
+      Datatype) const override {
     (void)config;
 
     auto input_size = input->size();
@@ -327,7 +327,7 @@ class AddNInPlace : public tiledb::sm::Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      Datatype datatype) const override {
+      Datatype) const override {
     auto input_size = input->size();
     RETURN_NOT_OK(output->append_view(input));
     output->reset_offset();
@@ -352,7 +352,7 @@ class AddNInPlace : public tiledb::sm::Filter {
       FilterBuffer* output_metadata,
       FilterBuffer* output,
       const tiledb::sm::Config& config,
-      Datatype datatype) const override {
+      Datatype) const override {
     (void)config;
 
     auto input_size = input->size();
@@ -412,7 +412,7 @@ class PseudoChecksumFilter : public tiledb::sm::Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      Datatype datatype) const override {
+      Datatype) const override {
     auto input_size = input->size();
     auto nelts = input_size / sizeof(uint64_t);
 
@@ -445,7 +445,7 @@ class PseudoChecksumFilter : public tiledb::sm::Filter {
       FilterBuffer* output_metadata,
       FilterBuffer* output,
       const tiledb::sm::Config& config,
-      Datatype datatype) const override {
+      Datatype) const override {
     (void)config;
 
     auto input_size = input->size();
@@ -505,7 +505,7 @@ class Add1IncludingMetadataFilter : public tiledb::sm::Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      Datatype datatype) const override {
+      Datatype) const override {
     auto input_size = static_cast<uint32_t>(input->size()),
          input_md_size = static_cast<uint32_t>(input_metadata->size());
     auto nelts = input_size / sizeof(uint64_t),
@@ -562,7 +562,7 @@ class Add1IncludingMetadataFilter : public tiledb::sm::Filter {
       FilterBuffer* output_metadata,
       FilterBuffer* output,
       const tiledb::sm::Config& config,
-      Datatype datatype) const override {
+      Datatype) const override {
     (void)config;
 
     if (input_metadata->size() != 2 * sizeof(uint32_t))
