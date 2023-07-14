@@ -64,8 +64,9 @@ Status BitshuffleFilter::run_forward(
     FilterBuffer* input_metadata,
     FilterBuffer* input,
     FilterBuffer* output_metadata,
-    FilterBuffer* output) const {
-  auto tile_type = tile.type();
+    FilterBuffer* output,
+    Datatype datatype) const {
+  auto tile_type = datatype;
   auto tile_type_size = static_cast<uint8_t>(datatype_size(tile_type));
 
   // Output size does not change with this filter.
@@ -93,7 +94,7 @@ Status BitshuffleFilter::run_forward(
       // Can't shuffle: just copy.
       std::memcpy(output_buf->cur_data(), part.data(), part_size);
     } else {
-      RETURN_NOT_OK(shuffle_part(tile, &part, output_buf));
+      RETURN_NOT_OK(shuffle_part(tile, &part, output_buf, datatype));
     }
 
     if (output_buf->owns_data())
@@ -126,8 +127,11 @@ Status BitshuffleFilter::compute_parts(
 }
 
 Status BitshuffleFilter::shuffle_part(
-    const WriterTile& tile, const ConstBuffer* part, Buffer* output) const {
-  auto tile_type = tile.type();
+    const WriterTile&,
+    const ConstBuffer* part,
+    Buffer* output,
+    Datatype datatype) const {
+  auto tile_type = datatype;
   auto tile_type_size = static_cast<uint8_t>(datatype_size(tile_type));
   auto part_nelts = part->size() / tile_type_size;
   auto bytes_processed = bshuf_bitshuffle(
@@ -170,10 +174,11 @@ Status BitshuffleFilter::run_reverse(
     FilterBuffer* input,
     FilterBuffer* output_metadata,
     FilterBuffer* output,
-    const Config& config) const {
+    const Config& config,
+    Datatype datatype) const {
   (void)config;
 
-  auto tile_type = tile.type();
+  auto tile_type = datatype;
   auto tile_type_size = static_cast<uint8_t>(datatype_size(tile_type));
 
   // Get number of parts
@@ -194,7 +199,7 @@ Status BitshuffleFilter::run_reverse(
       // Part was not shuffled; just copy.
       std::memcpy(output_buf->cur_data(), part.data(), part_size);
     } else {
-      RETURN_NOT_OK(unshuffle_part(tile, &part, output_buf));
+      RETURN_NOT_OK(unshuffle_part(tile, &part, output_buf, datatype));
     }
 
     if (output_buf->owns_data())
@@ -213,8 +218,11 @@ Status BitshuffleFilter::run_reverse(
 }
 
 Status BitshuffleFilter::unshuffle_part(
-    const Tile& tile, const ConstBuffer* part, Buffer* output) const {
-  auto tile_type = tile.type();
+    const Tile&,
+    const ConstBuffer* part,
+    Buffer* output,
+    Datatype datatype) const {
+  auto tile_type = datatype;
   auto tile_type_size = static_cast<uint8_t>(datatype_size(tile_type));
   auto part_nelts = part->size() / tile_type_size;
   auto bytes_processed = bshuf_bitunshuffle(

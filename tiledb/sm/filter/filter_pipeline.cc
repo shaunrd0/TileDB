@@ -239,6 +239,7 @@ Status FilterPipeline::filter_chunks_forward(
                            chunk_size;
     RETURN_NOT_OK(input_data.init(chunk_buffer, chunk_buffer_size));
 
+    Datatype type = tile.type();
     // Apply the filters sequentially.
     for (auto it = filters_.begin(), ite = filters_.end(); it != ite; ++it) {
       auto& f = *it;
@@ -260,8 +261,11 @@ Status FilterPipeline::filter_chunks_forward(
           &input_metadata,
           &input_data,
           &output_metadata,
-          &output_data));
+          &output_data,
+          type));
 
+      // Set type to next output datatype in pipeline.
+      type = f->output_datatype(type);
       input_data.set_read_only(false);
       throw_if_not_ok(input_data.swap(output_data));
       input_metadata.set_read_only(false);
@@ -444,6 +448,14 @@ Status FilterPipeline::run_reverse(
     const uint64_t max_chunk_index,
     uint64_t concurrency_level,
     const Config& config) const {
+  // TODO: Move out of parallel_for; Just for POC.
+  std::vector<Datatype> unfilter_types;
+  auto type = tile->type();
+  for (const auto& filter : filters_) {
+    type = filter->output_datatype(type);
+    unfilter_types.push_back(type);
+  }
+
   // Run each chunk through the entire pipeline.
   for (size_t i = min_chunk_index; i < max_chunk_index; i++) {
     auto& chunk = chunk_data.filtered_chunks_[i];
@@ -499,7 +511,8 @@ Status FilterPipeline::run_reverse(
           &input_data,
           &output_metadata,
           &output_data,
-          config));
+          config,
+          unfilter_types[filter_idx]));
 
       input_data.set_read_only(false);
       input_metadata.set_read_only(false);

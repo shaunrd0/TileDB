@@ -91,7 +91,8 @@ class BitshuffleFilter : public Filter {
       FilterBuffer* input_metadata,
       FilterBuffer* input,
       FilterBuffer* output_metadata,
-      FilterBuffer* output) const override;
+      FilterBuffer* output,
+      Datatype datatype) const override;
 
   /**
    * Unshuffle the bits of the input data into the output data buffer.
@@ -103,7 +104,8 @@ class BitshuffleFilter : public Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      const Config& config) const override;
+      const Config& config,
+      Datatype datatype) const override;
 
  private:
   /** Returns a new clone of this filter. */
@@ -128,7 +130,10 @@ class BitshuffleFilter : public Filter {
    * @return Status
    */
   Status shuffle_part(
-      const WriterTile& tile, const ConstBuffer* part, Buffer* output) const;
+      const WriterTile& tile,
+      const ConstBuffer* part,
+      Buffer* output,
+      Datatype datatype) const;
 
   /**
    * Perform bit unshuffling on the given input buffer.
@@ -138,7 +143,10 @@ class BitshuffleFilter : public Filter {
    * @return Status
    */
   Status unshuffle_part(
-      const Tile& tile, const ConstBuffer* part, Buffer* output) const;
+      const Tile& tile,
+      const ConstBuffer* part,
+      Buffer* output,
+      Datatype datatype) const;
 };
 
 }  // namespace sm

@@ -61,7 +61,8 @@ Status NoopFilter::run_forward(
     FilterBuffer* input_metadata,
     FilterBuffer* input,
     FilterBuffer* output_metadata,
-    FilterBuffer* output) const {
+    FilterBuffer* output,
+    Datatype) const {
   RETURN_NOT_OK(output->append_view(input));
   RETURN_NOT_OK(output_metadata->append_view(input_metadata));
   return Status::Ok();
@@ -74,7 +75,8 @@ Status NoopFilter::run_reverse(
     FilterBuffer* input,
     FilterBuffer* output_metadata,
     FilterBuffer* output,
-    const Config& config) const {
+    const Config& config,
+    Datatype) const {
   (void)config;
 
   RETURN_NOT_OK(output->append_view(input));

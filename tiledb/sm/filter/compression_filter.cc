@@ -239,7 +239,8 @@ Status CompressionFilter::run_forward(
     FilterBuffer* input_metadata,
     FilterBuffer* input,
     FilterBuffer* output_metadata,
-    FilterBuffer* output) const {
+    FilterBuffer* output,
+    Datatype datatype) const {
   // Easy case: no compression
   if (compressor_ == Compressor::NO_COMPRESSION) {
     RETURN_NOT_OK(output->append_view(input));
@@ -251,8 +252,8 @@ Status CompressionFilter::run_forward(
     return LOG_STATUS(
         Status_FilterError("Input is too large to be compressed."));
 
-  if ((tile.type() == Datatype::STRING_ASCII ||
-       tile.type() == Datatype::STRING_UTF8) &&
+  if ((datatype == Datatype::STRING_ASCII ||
+       datatype == Datatype::STRING_UTF8) &&
       offsets_tile) {
     if (compressor_ == Compressor::RLE ||
         compressor_ == Compressor::DICTIONARY_ENCODING)
@@ -288,9 +289,11 @@ Status CompressionFilter::run_forward(
 
   // Compress all parts.
   for (auto& part : metadata_parts)
-    RETURN_NOT_OK(compress_part(tile, &part, buffer_ptr, output_metadata));
+    RETURN_NOT_OK(
+        compress_part(tile, &part, buffer_ptr, output_metadata, datatype));
   for (auto& part : data_parts)
-    RETURN_NOT_OK(compress_part(tile, &part, buffer_ptr, output_metadata));
+    RETURN_NOT_OK(
+        compress_part(tile, &part, buffer_ptr, output_metadata, datatype));
 
   return Status::Ok();
 }
@@ -302,7 +305,8 @@ Status CompressionFilter::run_reverse(
     FilterBuffer* input,
     FilterBuffer* output_metadata,
     FilterBuffer* output,
-    const Config& config) const {
+    const Config& config,
+    Datatype datatype) const {
   (void)config;
 
   // Easy case: no compression
@@ -325,8 +329,8 @@ Status CompressionFilter::run_reverse(
   Buffer* metadata_buffer = output_metadata->buffer_ptr(0);
   assert(metadata_buffer != nullptr);
 
-  if ((tile.type() == Datatype::STRING_ASCII ||
-       tile.type() == Datatype::STRING_UTF8) &&
+  if ((datatype == Datatype::STRING_ASCII ||
+       datatype == Datatype::STRING_UTF8) &&
       version_ >= 12 && offsets_tile) {
     if (compressor_ == Compressor::RLE ||
         compressor_ == Compressor::DICTIONARY_ENCODING)
@@ -335,10 +339,11 @@ Status CompressionFilter::run_reverse(
   }
 
   for (uint32_t i = 0; i < num_metadata_parts; i++)
-    RETURN_NOT_OK(
-        decompress_part(tile, input, metadata_buffer, input_metadata));
+    RETURN_NOT_OK(decompress_part(
+        tile, input, metadata_buffer, input_metadata, datatype));
   for (uint32_t i = 0; i < num_data_parts; i++)
-    RETURN_NOT_OK(decompress_part(tile, input, data_buffer, input_metadata));
+    RETURN_NOT_OK(
+        decompress_part(tile, input, data_buffer, input_metadata, datatype));
 
   return Status::Ok();
 }
@@ -347,12 +352,13 @@ Status CompressionFilter::compress_part(
     const WriterTile& tile,
     ConstBuffer* part,
     Buffer* output,
-    FilterBuffer* output_metadata) const {
+    FilterBuffer* output_metadata,
+    Datatype datatype) const {
   // Create const buffer
   ConstBuffer input_buffer(part->data(), part->size());
 
   auto cell_size = tile.cell_size();
-  auto type = tile.type();
+  auto type = datatype;
 
   // Invoke the proper compressor
   uint32_t orig_size = (uint32_t)output->size();
@@ -411,9 +417,10 @@ Status CompressionFilter::decompress_part(
     const Tile& tile,
     FilterBuffer* input,
     Buffer* output,
-    FilterBuffer* input_metadata) const {
+    FilterBuffer* input_metadata,
+    Datatype datatype) const {
   auto cell_size = tile.cell_size();
-  auto type = tile.type();
+  auto type = datatype;
 
   // Read the part metadata
   uint32_t compressed_size, uncompressed_size;

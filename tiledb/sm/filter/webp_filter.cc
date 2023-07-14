@@ -60,7 +60,8 @@ Status WebpFilter::run_forward(
     FilterBuffer*,
     FilterBuffer*,
     FilterBuffer*,
-    FilterBuffer*) const {
+    FilterBuffer*,
+    Datatype) const {
   throw tiledb::sm::WebpNotPresentError();
 }
 
@@ -71,7 +72,8 @@ Status WebpFilter::run_reverse(
     FilterBuffer*,
     FilterBuffer*,
     FilterBuffer*,
-    const Config&) const {
+    const Config&,
+    Datatype) const {
   throw tiledb::sm::WebpNotPresentError();
 }
 
@@ -107,7 +109,8 @@ Status WebpFilter::run_forward(
     FilterBuffer* input_metadata,
     FilterBuffer* input,
     FilterBuffer* output_metadata,
-    FilterBuffer* output) const {
+    FilterBuffer* output,
+    Datatype) const {
   return run_forward(input_metadata, input, output_metadata, output);
 }
 
@@ -223,7 +226,8 @@ Status WebpFilter::run_reverse(
     FilterBuffer* input,
     FilterBuffer* output_metadata,
     FilterBuffer* output,
-    const Config&) const {
+    const Config&,
+    Datatype) const {
   if (tile.type() != Datatype::UINT8) {
     throw StatusException(Status_FilterError("Unsupported input type"));
   }

@@ -170,7 +170,8 @@ class WebpFilter : public Filter {
       FilterBuffer* input_metadata,
       FilterBuffer* input,
       FilterBuffer* output_metadata,
-      FilterBuffer* output) const override;
+      FilterBuffer* output,
+      Datatype datatype) const override;
 
   /**
    * Runs the filter forward, taking raw colorspace values as input and writing
@@ -208,7 +209,8 @@ class WebpFilter : public Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      const Config& config) const override;
+      const Config& config,
+      Datatype datatype) const override;
 
   /**
    * Runs the filter in reverse, returning raw colorspace values to the client.

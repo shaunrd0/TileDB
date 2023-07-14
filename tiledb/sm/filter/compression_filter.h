@@ -128,7 +128,8 @@ class CompressionFilter : public Filter {
       FilterBuffer* input_metadata,
       FilterBuffer* input,
       FilterBuffer* output_metadata,
-      FilterBuffer* output) const override;
+      FilterBuffer* output,
+      Datatype datatype) const override;
 
   /**
    * Decompress the given input into the given output.
@@ -140,7 +141,8 @@ class CompressionFilter : public Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      const Config& config) const override;
+      const Config& config,
+      Datatype datatype) const override;
 
   /** Set the compressor used by this filter instance. */
   void set_compressor(Compressor compressor);
@@ -187,7 +189,8 @@ class CompressionFilter : public Filter {
       const WriterTile& tile,
       ConstBuffer* part,
       Buffer* output,
-      FilterBuffer* output_metadata) const;
+      FilterBuffer* output_metadata,
+      Datatype datatype) const;
 
   /** Return the FilterType corresponding to the given Compressor. */
   static FilterType compressor_to_filter(Compressor compressor);
@@ -200,7 +203,8 @@ class CompressionFilter : public Filter {
       const Tile& tile,
       FilterBuffer* input,
       Buffer* output,
-      FilterBuffer* input_metadata) const;
+      FilterBuffer* input_metadata,
+      Datatype datatype) const;
 
   /** Calculate the size of the output metadata to allocate */
   size_t calculate_output_metadata_size(

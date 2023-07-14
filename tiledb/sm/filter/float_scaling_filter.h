@@ -105,7 +105,8 @@ class FloatScalingFilter : public Filter {
       FilterBuffer* input_metadata,
       FilterBuffer* input,
       FilterBuffer* output_metadata,
-      FilterBuffer* output) const override;
+      FilterBuffer* output,
+      Datatype datatype) const override;
 
   /**
    * Run reverse. Takes input data in integer representation and returns the
@@ -119,7 +120,8 @@ class FloatScalingFilter : public Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      const Config& config) const override;
+      const Config& config,
+      Datatype datatype) const override;
 
   /** Sets an option on this filter. */
   Status set_option_impl(FilterOption option, const void* value) override;

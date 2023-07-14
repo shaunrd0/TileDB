@@ -158,7 +158,8 @@ class Add1InPlace : public tiledb::sm::Filter {
       FilterBuffer* input_metadata,
       FilterBuffer* input,
       FilterBuffer* output_metadata,
-      FilterBuffer* output) const override {
+      FilterBuffer* output,
+      Datatype datatype) const override {
     auto input_size = input->size();
     RETURN_NOT_OK(output->append_view(input));
     output->reset_offset();
@@ -183,7 +184,8 @@ class Add1InPlace : public tiledb::sm::Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      const tiledb::sm::Config& config) const override {
+      const tiledb::sm::Config& config,
+      Datatype datatype) const override {
     (void)config;
 
     auto input_size = input->size();
@@ -229,7 +231,8 @@ class Add1OutOfPlace : public tiledb::sm::Filter {
       FilterBuffer* input_metadata,
       FilterBuffer* input,
       FilterBuffer* output_metadata,
-      FilterBuffer* output) const override {
+      FilterBuffer* output,
+      Datatype datatype) const override {
     auto input_size = input->size();
     auto nelts = input_size / sizeof(uint64_t);
 
@@ -265,7 +268,8 @@ class Add1OutOfPlace : public tiledb::sm::Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      const tiledb::sm::Config& config) const override {
+      const tiledb::sm::Config& config,
+      Datatype datatype) const override {
     (void)config;
 
     auto input_size = input->size();
@@ -322,7 +326,8 @@ class AddNInPlace : public tiledb::sm::Filter {
       FilterBuffer* input_metadata,
       FilterBuffer* input,
       FilterBuffer* output_metadata,
-      FilterBuffer* output) const override {
+      FilterBuffer* output,
+      Datatype datatype) const override {
     auto input_size = input->size();
     RETURN_NOT_OK(output->append_view(input));
     output->reset_offset();
@@ -346,7 +351,8 @@ class AddNInPlace : public tiledb::sm::Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      const tiledb::sm::Config& config) const override {
+      const tiledb::sm::Config& config,
+      Datatype datatype) const override {
     (void)config;
 
     auto input_size = input->size();
@@ -405,7 +411,8 @@ class PseudoChecksumFilter : public tiledb::sm::Filter {
       FilterBuffer* input_metadata,
       FilterBuffer* input,
       FilterBuffer* output_metadata,
-      FilterBuffer* output) const override {
+      FilterBuffer* output,
+      Datatype datatype) const override {
     auto input_size = input->size();
     auto nelts = input_size / sizeof(uint64_t);
 
@@ -437,7 +444,8 @@ class PseudoChecksumFilter : public tiledb::sm::Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      const tiledb::sm::Config& config) const override {
+      const tiledb::sm::Config& config,
+      Datatype datatype) const override {
     (void)config;
 
     auto input_size = input->size();
@@ -496,7 +504,8 @@ class Add1IncludingMetadataFilter : public tiledb::sm::Filter {
       FilterBuffer* input_metadata,
       FilterBuffer* input,
       FilterBuffer* output_metadata,
-      FilterBuffer* output) const override {
+      FilterBuffer* output,
+      Datatype datatype) const override {
     auto input_size = static_cast<uint32_t>(input->size()),
          input_md_size = static_cast<uint32_t>(input_metadata->size());
     auto nelts = input_size / sizeof(uint64_t),
@@ -552,7 +561,8 @@ class Add1IncludingMetadataFilter : public tiledb::sm::Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      const tiledb::sm::Config& config) const override {
+      const tiledb::sm::Config& config,
+      Datatype datatype) const override {
     (void)config;
 
     if (input_metadata->size() != 2 * sizeof(uint32_t))
@@ -3428,7 +3438,6 @@ void testing_float_scaling_filter() {
   CHECK(tile.filtered_buffer().size() != 0);
 
   auto unfiltered_tile = create_tile_for_unfiltering(nelts, tile);
-  unfiltered_tile.set_datatype(t);
   run_reverse(config, tp, unfiltered_tile, pipeline);
   for (uint64_t i = 0; i < nelts; i++) {
     FloatingType elt = 0.0f;
@@ -3586,15 +3595,16 @@ TEST_CASE("Filter: Pipeline filtered output types", "[filter][pipeline]") {
       pipeline.run_forward(&test::g_helper_stats, &tile, nullptr, &tp).ok());
   CHECK(tile.size() == 0);
   CHECK(tile.filtered_buffer().size() != 0);
-  if (pipeline.has_filter(tiledb::sm::FilterType::FILTER_XOR)) {
-    // Test the final tile type is expected for XORFilter byte_width.
-    CHECK(datatype_size(tile.type()) == byte_width);
-  } else {
-    CHECK(tile.type() == Datatype::INT32);
-  }
+
+  // Not valid checks with this approach.
+  //  if (pipeline.has_filter(tiledb::sm::FilterType::FILTER_XOR)) {
+  //    // Test the final tile type is expected for XORFilter byte_width.
+  //    CHECK(datatype_size(tile.type()) == byte_width);
+  //  } else {
+  //    CHECK(tile.type() == Datatype::INT32);
+  //  }
 
   auto unfiltered_tile = create_tile_for_unfiltering(data.size(), tile);
-  unfiltered_tile.set_datatype(Datatype::FLOAT32);
   ChunkData chunk_data;
   unfiltered_tile.load_chunk_data(chunk_data);
   REQUIRE(pipeline

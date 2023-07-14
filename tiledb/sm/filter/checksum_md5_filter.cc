@@ -66,7 +66,8 @@ Status ChecksumMD5Filter::run_forward(
     FilterBuffer* input_metadata,
     FilterBuffer* input,
     FilterBuffer* output_metadata,
-    FilterBuffer* output) const {
+    FilterBuffer* output,
+    Datatype) const {
   // Set output buffer to input buffer
   RETURN_NOT_OK(output->append_view(input));
   // Add original input metadata as a view to the output metadata
@@ -102,7 +103,8 @@ Status ChecksumMD5Filter::run_reverse(
     FilterBuffer* input,
     FilterBuffer* output_metadata,
     FilterBuffer* output,
-    const Config& config) const {
+    const Config& config,
+    Datatype) const {
   // Fetch the skip checksum configuration parameter.
   bool found;
   bool skip_validation;

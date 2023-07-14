@@ -89,7 +89,8 @@ class ChecksumSHA256Filter : public Filter {
       FilterBuffer* input_metadata,
       FilterBuffer* input,
       FilterBuffer* output_metadata,
-      FilterBuffer* output) const override;
+      FilterBuffer* output,
+      Datatype datatype) const override;
 
   /**
    * Decrypt the bytes of the input data into the output data buffer.
@@ -101,7 +102,8 @@ class ChecksumSHA256Filter : public Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      const Config& config) const override;
+      const Config& config,
+      Datatype datatype) const override;
 
  private:
   /** Returns a new clone of this filter. */

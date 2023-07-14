@@ -64,7 +64,8 @@ Status ByteshuffleFilter::run_forward(
     FilterBuffer* input_metadata,
     FilterBuffer* input,
     FilterBuffer* output_metadata,
-    FilterBuffer* output) const {
+    FilterBuffer* output,
+    Datatype datatype) const {
   // Output size does not change with this filter.
   RETURN_NOT_OK(output->prepend_buffer(input->size()));
   Buffer* output_buf = output->buffer_ptr(0);
@@ -83,7 +84,7 @@ Status ByteshuffleFilter::run_forward(
     auto part_size = (uint32_t)part.size();
     RETURN_NOT_OK(output_metadata->write(&part_size, sizeof(uint32_t)));
 
-    RETURN_NOT_OK(shuffle_part(tile, &part, output_buf));
+    RETURN_NOT_OK(shuffle_part(tile, &part, output_buf, datatype));
 
     if (output_buf->owns_data())
       output_buf->advance_size(part.size());
@@ -94,8 +95,11 @@ Status ByteshuffleFilter::run_forward(
 }
 
 Status ByteshuffleFilter::shuffle_part(
-    const WriterTile& tile, const ConstBuffer* part, Buffer* output) const {
-  auto tile_type = tile.type();
+    const WriterTile&,
+    const ConstBuffer* part,
+    Buffer* output,
+    Datatype datatype) const {
+  auto tile_type = datatype;
   auto tile_type_size = static_cast<uint8_t>(datatype_size(tile_type));
 
   blosc::shuffle(
@@ -114,7 +118,8 @@ Status ByteshuffleFilter::run_reverse(
     FilterBuffer* input,
     FilterBuffer* output_metadata,
     FilterBuffer* output,
-    const Config& config) const {
+    const Config& config,
+    Datatype datatype) const {
   (void)config;
 
   // Get number of parts
@@ -131,7 +136,7 @@ Status ByteshuffleFilter::run_reverse(
     ConstBuffer part(nullptr, 0);
     RETURN_NOT_OK(input->get_const_buffer(part_size, &part));
 
-    RETURN_NOT_OK(unshuffle_part(tile, &part, output_buf));
+    RETURN_NOT_OK(unshuffle_part(tile, &part, output_buf, datatype));
 
     if (output_buf->owns_data())
       output_buf->advance_size(part_size);
@@ -149,8 +154,11 @@ Status ByteshuffleFilter::run_reverse(
 }
 
 Status ByteshuffleFilter::unshuffle_part(
-    const Tile& tile, const ConstBuffer* part, Buffer* output) const {
-  auto tile_type = tile.type();
+    const Tile&,
+    const ConstBuffer* part,
+    Buffer* output,
+    Datatype datatype) const {
+  auto tile_type = datatype;
   auto tile_type_size = static_cast<uint8_t>(datatype_size(tile_type));
 
   blosc::unshuffle(

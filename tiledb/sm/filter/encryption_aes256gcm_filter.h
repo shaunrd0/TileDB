@@ -102,7 +102,8 @@ class EncryptionAES256GCMFilter : public Filter {
       FilterBuffer* input_metadata,
       FilterBuffer* input,
       FilterBuffer* output_metadata,
-      FilterBuffer* output) const override;
+      FilterBuffer* output,
+      Datatype datatype) const override;
 
   /**
    * Decrypt the bytes of the input data into the output data buffer.
@@ -114,7 +115,8 @@ class EncryptionAES256GCMFilter : public Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      const Config& config) const override;
+      const Config& config,
+      Datatype datatype) const override;
 
   /**
    * Return a pointer to the secret key set on this filter.

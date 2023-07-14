@@ -133,7 +133,8 @@ class Filter {
       FilterBuffer* input_metadata,
       FilterBuffer* input,
       FilterBuffer* output_metadata,
-      FilterBuffer* output) const = 0;
+      FilterBuffer* output,
+      Datatype datatype) const = 0;
 
   /**
    * Runs this filter in the "reverse" direction (i.e. during read queries).
@@ -161,7 +162,8 @@ class Filter {
       FilterBuffer* input,
       FilterBuffer* output_metadata,
       FilterBuffer* output,
-      const Config& config) const = 0;
+      const Config& config,
+      Datatype datatype) const = 0;
 
   /**
    * Initializes the filter compression resource pool if any
