@@ -1,1 +1,1 @@
-Sitemap: https://github.com/shaunrd0/TileDB/sitemap.xml
+Sitemap: https://shaunrd0.github.io/TileDB/sitemap.xml
