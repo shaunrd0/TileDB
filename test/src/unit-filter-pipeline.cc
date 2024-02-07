@@ -32,6 +32,7 @@
  */
 
 #include "test/support/src/helpers.h"
+#include "test/support/src/mem_helpers.h"
 #include "tiledb/common/common.h"
 #include "tiledb/sm/array_schema/array_schema.h"
 #include "tiledb/sm/array_schema/attribute.h"
@@ -397,7 +398,8 @@ TEST_CASE("Filter: Test compression", "[filter][compression]") {
 
   // Set up dummy array schema (needed by compressor filter for cell size, etc).
   uint32_t dim_dom[] = {1, 10};
-  auto dim{make_shared<tiledb::sm::Dimension>(HERE(), "", Datatype::INT32)};
+  auto dim{make_shared<tiledb::sm::Dimension>(
+      HERE(), tiledb::test::create_test_memory_tracker(), "", Datatype::INT32)};
   CHECK(dim->set_domain(dim_dom).ok());
   auto domain{make_shared<tiledb::sm::Domain>(HERE())};
   CHECK(domain->add_dimension(dim).ok());
@@ -522,7 +524,8 @@ TEST_CASE("Filter: Test compression var", "[filter][compression][var]") {
 
   // Set up dummy array schema (needed by compressor filter for cell size, etc).
   uint32_t dim_dom[] = {1, 10};
-  auto dim{make_shared<tiledb::sm::Dimension>(HERE(), "", Datatype::INT32)};
+  auto dim{make_shared<tiledb::sm::Dimension>(
+      HERE(), tiledb::test::create_test_memory_tracker(), "", Datatype::INT32)};
   CHECK(dim->set_domain(dim_dom).ok());
   auto domain{make_shared<tiledb::sm::Domain>(HERE())};
   CHECK(domain->add_dimension(dim).ok());
