@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Dictionary Encoding Filter</title>
+<title>Current Domain</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,23 +23,23 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
-<script src="../../site_libs/clipboard/clipboard.min.js"></script>
-<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="../../site_libs/quarto-search/fuse.min.js"></script>
-<script src="../../site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="../../">
-<link href="../../images/favicon.ico" rel="icon">
-<script src="../../site_libs/quarto-html/quarto.js"></script>
-<script src="../../site_libs/quarto-html/popper.min.js"></script>
-<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="../../site_libs/quarto-html/anchor.min.js"></script>
-<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../images/favicon.ico" rel="icon">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -69,7 +69,7 @@ ul.task-list li input[type="checkbox"] {
 }</script>
 
 
-<link rel="stylesheet" href="../../quarto-materials/tiledb.css">
+<link rel="stylesheet" href="../quarto-materials/tiledb.css">
 </head>
 
 <body class="nav-fixed">
@@ -79,8 +79,8 @@ ul.task-list li input[type="checkbox"] {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a href="../../index.html" class="navbar-brand navbar-brand-logo">
-    <img src="../../quarto-materials/tiledb-logo.png" alt="" class="navbar-logo">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../quarto-materials/tiledb-logo.png" alt="" class="navbar-logo">
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -117,8 +117,7 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#filter-enum-value" id="toc-filter-enum-value" class="nav-link active" data-scroll-target="#filter-enum-value">Filter Enum Value</a></li>
-  <li><a href="#input-and-output-layout" id="toc-input-and-output-layout" class="nav-link" data-scroll-target="#input-and-output-layout">Input and Output Layout</a></li>
+  <li><a href="#main-structure" id="toc-main-structure" class="nav-link active" data-scroll-target="#main-structure">Main Structure</a></li>
   </ul>
 </nav>
     </div>
@@ -127,7 +126,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Dictionary Encoding Filter</h1>
+<h1 class="title">Current Domain</h1>
 </div>
 
 
@@ -144,23 +143,40 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>The Dictionary Encoding filter compresses losslessly string data by creating a set of unique strings (called the <code>dictionary</code>) from the input data and substituting the string data on disk with their position in the dictionary. As an example in pseudocode:</p>
-<pre><code>input_data = "HG543232", "HG543232", "HG543232", "HG54", "HG54", "A", "HG543232", "HG54"]
-# apply dictionary encoding -&gt;
-dictionary = ["HG543232", "HG54", "A"]
-output_data = [0, 0, 0, 1, 1, 2, 0, 1]</code></pre>
-<section id="filter-enum-value" class="level1">
-<h1>Filter Enum Value</h1>
-<p>The filter enum value for the Dictionary Encoding filter is <code>14</code> (<code>TILEDB_FILTER_DICTIONARY</code> enum).</p>
-</section>
-<section id="input-and-output-layout" class="level1">
-<h1>Input and Output Layout</h1>
-<ul>
-<li>Input is an array of strings <code>[str1|...|strN]</code>.</li>
-<li>Output is an array of integers <code>[num1|...|numN]</code>, that are actually the indices in the dictionary of the strings that appeared in input, in the order that they appeared. The integer datasize depends on the input and is chosen between <code>uint8_t</code>, <code>uint16_t</code>, <code>uint32_t</code> or <code>uint64_t</code> as the minimum datasize that can hold the size of the dictionary, aka the number of unique strings in input and stored in output metadata.</li>
-<li>Output metadata are in the form: <code>[output_datasize|dict_string_datasize|dictionary]</code> where <code>dictionary</code> is in the form: <code>[num_of_strings|size_str1|str1|...|size_strN|strN]</code>. <code>output_datasize</code> refers to the chosen datasize of the integers in output while <code>dict_string_datasize</code> refers to the minimum integer size that can hold the maximum length string in input and is also chosen between <code>uint8_t</code>, <code>uint16_t</code>, <code>uint32_t</code> or <code>uint64_t</code>.</li>
-</ul>
-<p>All the above integers are stored in big-endian format.</p>
+<section id="main-structure" class="level2">
+<h2 class="anchored" data-anchor-id="main-structure">Main Structure</h2>
+<p>The array current domain is stored within the <a href="../format_spec/array_schema.html#array-schema-file">Array Schema</a> file. If a current domain is empty, only the version number and the empty flag are serialized to storage.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Field</strong></th>
+<th style="text-align: left;"><strong>Type</strong></th>
+<th style="text-align: left;"><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Version number</td>
+<td style="text-align: left;"><code>uint32_t</code></td>
+<td style="text-align: left;">Current domain version number</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Empty</td>
+<td style="text-align: left;"><code>uint8_t</code></td>
+<td style="text-align: left;">Whether the current domain has a representation(e.g.&nbsp;NDRectangle) set or not</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Type</td>
+<td style="text-align: left;"><code>uint8_t</code></td>
+<td style="text-align: left;">The type of current domain stored in this file</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">NDRectangle</td>
+<td style="text-align: left;"><a href="../format_spec/fragment.html#mbr">MBR</a></td>
+<td style="text-align: left;">A hyperrectangle defined using <a href="../format_spec/fragment.html#mbr">1DRange</a> items for each dimension</td>
+</tr>
+</tbody>
+</table>
 
 
 </section>

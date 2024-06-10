@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Dictionary Encoding Filter</title>
+<title>directory</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -117,52 +117,33 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#filter-enum-value" id="toc-filter-enum-value" class="nav-link active" data-scroll-target="#filter-enum-value">Filter Enum Value</a></li>
-  <li><a href="#input-and-output-layout" id="toc-input-and-output-layout" class="nav-link" data-scroll-target="#input-and-output-layout">Input and Output Layout</a></li>
+  <li><a href="#stdx" id="toc-stdx" class="nav-link active" data-scroll-target="#stdx">stdx</a>
+  <ul class="collapse">
+  <li><a href="#ranges" id="toc-ranges" class="nav-link" data-scroll-target="#ranges"><code>ranges</code></a></li>
+  <li><a href="#thread-and-stop_token" id="toc-thread-and-stop_token" class="nav-link" data-scroll-target="#thread-and-stop_token"><code>thread</code> and <code>stop_token</code></a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
-<div class="quarto-title">
-<h1 class="title">Dictionary Encoding Filter</h1>
-</div>
 
 
 
-<div class="quarto-title-meta">
-
-    
-  
-    
-  </div>
-  
-
-
-</header>
-
-
-<p>The Dictionary Encoding filter compresses losslessly string data by creating a set of unique strings (called the <code>dictionary</code>) from the input data and substituting the string data on disk with their position in the dictionary. As an example in pseudocode:</p>
-<pre><code>input_data = "HG543232", "HG543232", "HG543232", "HG54", "HG54", "A", "HG543232", "HG54"]
-# apply dictionary encoding -&gt;
-dictionary = ["HG543232", "HG54", "A"]
-output_data = [0, 0, 0, 1, 1, 2, 0, 1]</code></pre>
-<section id="filter-enum-value" class="level1">
-<h1>Filter Enum Value</h1>
-<p>The filter enum value for the Dictionary Encoding filter is <code>14</code> (<code>TILEDB_FILTER_DICTIONARY</code> enum).</p>
+<section id="stdx" class="level2">
+<h2 class="anchored" data-anchor-id="stdx">stdx</h2>
+<p>This directory contains local implementations of C++ standard library components that have been introduced in recent versions of the standard, but that are not included in the standard library shipping with one or more of the compilers supported by libtiledb.</p>
+<section id="ranges" class="level3">
+<h3 class="anchored" data-anchor-id="ranges"><code>ranges</code></h3>
+<p>There are two views standardized as part of C++23 that we provide a subset for: <code>zip_view</code> and <code>chunk_view</code>. The file <code>tiledb/stdx/ranges</code> is an include file (mimicking “<code>ranges</code>” in the standard library) that provides these two views. The implementations of these views are included in the <code>__ranges</code> subdirectory. (This naming convention mirrors that of LLVM.) The include directives for the implementations are surrounded by the appropriate <code>version</code> preprocessor directives so that once <code>zip_view</code> and/or <code>chunk_view</code> are available for a given compiler, the standard implementation will be used instead of our local implementation.</p>
 </section>
-<section id="input-and-output-layout" class="level1">
-<h1>Input and Output Layout</h1>
-<ul>
-<li>Input is an array of strings <code>[str1|...|strN]</code>.</li>
-<li>Output is an array of integers <code>[num1|...|numN]</code>, that are actually the indices in the dictionary of the strings that appeared in input, in the order that they appeared. The integer datasize depends on the input and is chosen between <code>uint8_t</code>, <code>uint16_t</code>, <code>uint32_t</code> or <code>uint64_t</code> as the minimum datasize that can hold the size of the dictionary, aka the number of unique strings in input and stored in output metadata.</li>
-<li>Output metadata are in the form: <code>[output_datasize|dict_string_datasize|dictionary]</code> where <code>dictionary</code> is in the form: <code>[num_of_strings|size_str1|str1|...|size_strN|strN]</code>. <code>output_datasize</code> refers to the chosen datasize of the integers in output while <code>dict_string_datasize</code> refers to the minimum integer size that can hold the maximum length string in input and is also chosen between <code>uint8_t</code>, <code>uint16_t</code>, <code>uint32_t</code> or <code>uint64_t</code>.</li>
-</ul>
-<p>All the above integers are stored in big-endian format.</p>
+<section id="thread-and-stop_token" class="level3">
+<h3 class="anchored" data-anchor-id="thread-and-stop_token"><code>thread</code> and <code>stop_token</code></h3>
+<p>These are copies of Josuttis’s model implementation.</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

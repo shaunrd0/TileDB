@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.4.550">
+<meta name="generator" content="quarto-1.4.555">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -145,7 +145,7 @@ ul.task-list li input[type="checkbox"] {
 <p>The ignore file is a simple text file where each line contains a URI string. The URI is the relative URI based on the top level array URI.</p>
 <p>Ignored files are used to specify commit files that should be ignored. The timestamps for the file is used to identify the timestamp range that is included inside of the file (with the smaller/bigger timestamp from contained elements). That way if an array is opened at a time that doesn’t intersect the timestamp range of the file, it can be omitted. All ignore files that intersect the array open start/end times will be loaded when the array is opened. There are a few situations where those files are required, all linked to <a href="../format_spec/consolidated_commits_file.html">consolidated commits files</a>. One of them is when fragments are vacuumed after consolidation. If any fragments were included a consolidated commits file, they now should be added to an ignore file so that the system doesn’t try to load that fragments. Another is when a fragment that is included in a consolidated commits file is deleted, it needs to be added to an ignore file so that the array can still be opened.</p>
 <p>Once a new consolidated commits file get generated, it will not include any of the fragments that were deleted or vacuumed. At that point, the ignore files and the other consolidated commits files can be vacuumed.</p>
-<table class="table">
+<table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
 <col style="width: 33%">
@@ -259,6 +259,24 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     // clear code selection
     e.clearSelection();
   });
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/shaunrd0\.github\.io\/TileDB\/");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
   function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
     const config = {
       allowHTML: true,
@@ -293,7 +311,11 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       try { href = new URL(href).hash; } catch {}
       const id = href.replace(/^#\/?/, "");
       const note = window.document.getElementById(id);
-      return note.innerHTML;
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
     });
   }
   const xrefs = window.document.querySelectorAll('a.quarto-xref');
