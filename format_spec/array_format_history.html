@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>On-disk Serialization and Deserialization</title>
+<title>Array format version history</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,60 +20,26 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
-<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
-<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
-<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
-<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="../../../">
-<link href="../../../images/favicon.ico" rel="icon">
-<script src="../../../site_libs/quarto-html/quarto.js"></script>
-<script src="../../../site_libs/quarto-html/popper.min.js"></script>
-<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
-<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../images/favicon.ico" rel="icon">
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -103,7 +69,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 
 
-<link rel="stylesheet" href="../../../quarto-materials/tiledb.css">
+<link rel="stylesheet" href="../quarto-materials/tiledb.css">
 </head>
 
 <body class="nav-fixed">
@@ -113,8 +79,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a href="../../../index.html" class="navbar-brand navbar-brand-logo">
-    <img src="../../../quarto-materials/tiledb-logo.png" alt="" class="navbar-logo">
+    <a href="../index.html" class="navbar-brand navbar-brand-logo">
+    <img src="../quarto-materials/tiledb-logo.png" alt="" class="navbar-logo">
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -151,9 +117,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#serialization-and-deserialization-guidelines" id="toc-serialization-and-deserialization-guidelines" class="nav-link active" data-scroll-target="#serialization-and-deserialization-guidelines">Serialization and Deserialization Guidelines</a>
+  <li><a href="#array-format-version-history" id="toc-array-format-version-history" class="nav-link active" data-scroll-target="#array-format-version-history">Array Format Version History</a>
   <ul class="collapse">
-  <li><a href="#validating-enums" id="toc-validating-enums" class="nav-link" data-scroll-target="#validating-enums">Validating Enums</a></li>
+  <li><a href="#version-22" id="toc-version-22" class="nav-link" data-scroll-target="#version-22">Version 22</a></li>
+  <li><a href="#version-21" id="toc-version-21" class="nav-link" data-scroll-target="#version-21">Version 21</a></li>
+  <li><a href="#version-20" id="toc-version-20" class="nav-link" data-scroll-target="#version-20">Version 20</a></li>
+  <li><a href="#version-19" id="toc-version-19" class="nav-link" data-scroll-target="#version-19">Version 19</a></li>
+  <li><a href="#version-18" id="toc-version-18" class="nav-link" data-scroll-target="#version-18">Version 18</a></li>
+  <li><a href="#version-17" id="toc-version-17" class="nav-link" data-scroll-target="#version-17">Version 17</a></li>
+  <li><a href="#version-16" id="toc-version-16" class="nav-link" data-scroll-target="#version-16">Version 16</a></li>
+  <li><a href="#version-15" id="toc-version-15" class="nav-link" data-scroll-target="#version-15">Version 15</a></li>
+  <li><a href="#version-14" id="toc-version-14" class="nav-link" data-scroll-target="#version-14">Version 14</a></li>
+  <li><a href="#version-13" id="toc-version-13" class="nav-link" data-scroll-target="#version-13">Version 13</a></li>
+  <li><a href="#version-12" id="toc-version-12" class="nav-link" data-scroll-target="#version-12">Version 12</a></li>
+  <li><a href="#version-11" id="toc-version-11" class="nav-link" data-scroll-target="#version-11">Version 11</a></li>
+  <li><a href="#version-10" id="toc-version-10" class="nav-link" data-scroll-target="#version-10">Version 10</a></li>
+  <li><a href="#version-9" id="toc-version-9" class="nav-link" data-scroll-target="#version-9">Version 9</a></li>
+  <li><a href="#version-8" id="toc-version-8" class="nav-link" data-scroll-target="#version-8">Version 8</a></li>
+  <li><a href="#version-7" id="toc-version-7" class="nav-link" data-scroll-target="#version-7">Version 7</a></li>
+  <li><a href="#version-6" id="toc-version-6" class="nav-link" data-scroll-target="#version-6">Version 6</a></li>
+  <li><a href="#version-5" id="toc-version-5" class="nav-link" data-scroll-target="#version-5">Version 5</a></li>
+  <li><a href="#version-4" id="toc-version-4" class="nav-link" data-scroll-target="#version-4">Version 4</a></li>
+  <li><a href="#version-3" id="toc-version-3" class="nav-link" data-scroll-target="#version-3">Version 3</a></li>
+  <li><a href="#version-2" id="toc-version-2" class="nav-link" data-scroll-target="#version-2">Version 2</a></li>
+  <li><a href="#version-1" id="toc-version-1" class="nav-link" data-scroll-target="#version-1">Version 1</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -163,7 +150,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">On-disk Serialization and Deserialization</h1>
+<h1 class="title">Array format version history</h1>
 </div>
 
 
@@ -180,27 +167,203 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="serialization-and-deserialization-guidelines" class="level2">
-<h2 class="anchored" data-anchor-id="serialization-and-deserialization-guidelines">Serialization and Deserialization Guidelines</h2>
-<p>The status of on-disk serialization is currently in flux. At time of writing, the current guidelines for writing serialize functions for TileDB classes is as follows:</p>
+<section id="array-format-version-history" class="level1">
+<h1>Array Format Version History</h1>
+<section id="version-22" class="level2">
+<h2 class="anchored" data-anchor-id="version-22">Version 22</h2>
+<p>Introduced in TileDB 2.25</p>
 <ul>
-<li>Only use <code>sizeof</code> on fixed-sized types (not variables or types with compiler-dependent size like <code>bool</code>).</li>
-<li>Return a TileDB shared pointer to the object in <code>deserialize</code> methods. Use exceptions, not <code>Status</code> objects, for errors.</li>
-<li>Validate all types either at time of deserialization or in the constructor used for generating the object.</li>
-<li>Add unit tests that check the validations throws the expected errors.</li>
+<li>The <em>Current domain</em> field was added to <a href="../format_spec/array_schema.html#array-schema-file">array schemas</a>.</li>
 </ul>
-<section id="validating-enums" class="level3">
-<h3 class="anchored" data-anchor-id="validating-enums">Validating Enums</h3>
-<p>For validating enums, consider creating a function that converts from the underlying variable type to the enum with validation. The serialization/deserialization should be to an fixed-size integer of the under-lying type. Consider writing a function with validation to get the actual enum from the integer. For example,</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode cpp code-with-copy"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">inline</span> ArrayType array_type_from_int<span class="op">(</span><span class="dt">uint8_t</span> array_type_enum<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">auto</span> type <span class="op">=</span> ArrayType<span class="op">(</span>array_type_enum<span class="op">);</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>type <span class="op">!=</span> ArrayType<span class="op">::</span>DENSE <span class="op">&amp;&amp;</span> type <span class="op">!=</span> ArrayType<span class="op">::</span>SPARSE<span class="op">)</span> <span class="op">{</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">throw</span> <span class="bu">std::</span>runtime_error<span class="op">(</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Invalid ArrayType ("</span> <span class="op">+</span> <span class="bu">std::</span>to_string<span class="op">(</span>array_type_enum<span class="op">)</span> <span class="op">+</span> <span class="st">")"</span><span class="op">);</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> type<span class="op">;</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>If the enum has many types, use a <code>switch</code> statement to validate the types.</p>
+</section>
+<section id="version-21" class="level2">
+<h2 class="anchored" data-anchor-id="version-21">Version 21</h2>
+<p>Introduced in TileDB 2.19</p>
+<ul>
+<li>The TileDB implementation has been updated to fix computing <a href="../format_spec/fragment.html#tile-mins-maxes">tile metadata</a> for nullable fixed-size strings on dense arrays.</li>
+</ul>
+<blockquote class="blockquote">
+<p>[!NOTE] This version does not contain any changes to the storage format, but was introduced as an indicator for implementations to not rely on tile metadata for nullable fixed-size strings on dense arrays on previous versions.</p>
+</blockquote>
+</section>
+<section id="version-20" class="level2">
+<h2 class="anchored" data-anchor-id="version-20">Version 20</h2>
+<p>Introduced in TileDB 2.17</p>
+<ul>
+<li>Arrays can have <a href="../format_spec/enumeration.html">enumerations</a>.</li>
+<li>The bit-width reduction and positive delta encoding filters are supported on data of date or time types.</li>
+<li>The <a href="../format_spec/filter_pipeline.html#filter-options">filter pipeline options</a> for the double-delta filter contain the <em>Reinterpret datatype</em> field.</li>
+</ul>
+</section>
+<section id="version-19" class="level2">
+<h2 class="anchored" data-anchor-id="version-19">Version 19</h2>
+<p>Introduced in TileDB 2.16</p>
+<ul>
+<li><a href="../format_spec/vacuum_file.html">Vacuum files</a> contain relative paths to the location of the array.</li>
+<li>The <a href="../format_spec/filter_pipeline.html#filter-options">filter pipeline options</a> for the delta filter contain the <em>Reinterpret datatype</em> field.</li>
+</ul>
+</section>
+<section id="version-18" class="level2">
+<h2 class="anchored" data-anchor-id="version-18">Version 18</h2>
+<p>Introduced in TileDB 2.15</p>
+<ul>
+<li>Arrays can have <a href="../format_spec/array_schema.html#dimension-label">dimension labels</a>.</li>
+</ul>
+</section>
+<section id="version-17" class="level2">
+<h2 class="anchored" data-anchor-id="version-17">Version 17</h2>
+<p>Introduced in TileDB 2.14</p>
+<ul>
+<li>The <em>Order</em> field was added to <a href="../format_spec/array_schema.html#attribute">attributes</a>.</li>
+<li>Cell offsets in dimensions or attributes of UTF-8 string type are not written in the offset tiles, if the RLE or dictionary encoding filter exists in the filter pipeline. They are instead encoded as part of the data tile.</li>
+</ul>
+</section>
+<section id="version-16" class="level2">
+<h2 class="anchored" data-anchor-id="version-16">Version 16</h2>
+<p>Introduced in TileDB 2.12</p>
+<ul>
+<li>Arrays can have <a href="../format_spec/delete_commit_file.html">delete commit files</a>.</li>
+<li>Arrays can have <a href="../format_spec/update_commit_file.html">update commit files</a>.
+<ul>
+<li>The TileDB implementation currently supports writing update commit files as an experimental feature, but they are not yet considered when performing reads.</li>
+</ul></li>
+<li>Fragment metadata contain <a href="../format_spec/fragment.html#tile-processed-conditions">tile processed conditions</a>.</li>
+</ul>
+</section>
+<section id="version-15" class="level2">
+<h2 class="anchored" data-anchor-id="version-15">Version 15</h2>
+<p>Introduced in TileDB 2.11</p>
+<ul>
+<li>Consolidated fragments can have delete metadata files. The <em>Includes delete metadata</em> field was added to the <a href="../format_spec/fragment.html#footer">fragment metadata footer</a>.</li>
+</ul>
+</section>
+<section id="version-14" class="level2">
+<h2 class="anchored" data-anchor-id="version-14">Version 14</h2>
+<p>Introduced in TileDB 2.10</p>
+<ul>
+<li>Consolidated fragments can have timestamp files. The <em>Includes timestamps</em> field was added to the <a href="../format_spec/fragment.html#footer">fragment metadata footer</a>.</li>
+</ul>
+</section>
+<section id="version-13" class="level2">
+<h2 class="anchored" data-anchor-id="version-13">Version 13</h2>
+<p>Introduced in TileDB 2.9</p>
+<ul>
+<li>Cell offsets in dimensions or attributes of ASCII string type are not written in the offset tiles, if the dictionary encoding filter exists in the filter pipeline. They are instead encoded as part of the data tile.</li>
+</ul>
+</section>
+<section id="version-12" class="level2">
+<h2 class="anchored" data-anchor-id="version-12">Version 12</h2>
+<p>Introduced in TileDB 2.8</p>
+<ul>
+<li>The <a href="../format_spec/array_file_hierarchy.html">array file hierarchy</a> was updated to store fragments, commits and consolidated fragment metadata in separate subdirectories.</li>
+<li>The extension of commit files was changed to <code>.wrt</code>.</li>
+<li>Cell offsets in dimensions or attributes of ASCII string type are not written in the offset tiles, if the RLE filter exists in the filter pipeline. They are instead encoded as part of the data tile.</li>
+</ul>
+</section>
+<section id="version-11" class="level2">
+<h2 class="anchored" data-anchor-id="version-11">Version 11</h2>
+<p>Introduced in TileDB 2.7</p>
+<ul>
+<li>Fragment metadata contain <a href="../format_spec/fragment.html#tile-mins-maxes">metadata</a> (min/max value, sum, null count) for data in the whole fragment and each tile.</li>
+<li>The TileDB implementation has been updated to never split cells when storing them in chunks.</li>
+</ul>
+</section>
+<section id="version-10" class="level2">
+<h2 class="anchored" data-anchor-id="version-10">Version 10</h2>
+<p>Introduced in TileDB 2.4</p>
+<ul>
+<li>Arrays support schema evolution.
+<ul>
+<li>Array schemas are stored in a <code>__schema</code> subdirectory, and have a <a href="../format_spec/timestamped_name.html">timestamped name</a>.</li>
+<li>The <em>Array schema name</em> field was added to the <a href="../format_spec/fragment.html#footer">fragment metadata footer</a>.</li>
+</ul></li>
+<li>The <em>Footer length</em> field of the <a href="../format_spec/fragment.html#footer">fragment metadata footer</a> is always written.</li>
+</ul>
+</section>
+<section id="version-9" class="level2">
+<h2 class="anchored" data-anchor-id="version-9">Version 9</h2>
+<p>Introduced in TileDB 2.3</p>
+<ul>
+<li><a href="../format_spec/fragment.html#data-file">Data files</a> are named by the index of their attribute or dimension.</li>
+<li>The <em>URI</em> fields of <a href="../format_spec/consolidated_fragment_metadata_file.html">Consolidated fragment metadata files</a> contain relative paths to the location of fragments in the array.</li>
+</ul>
+</section>
+<section id="version-8" class="level2">
+<h2 class="anchored" data-anchor-id="version-8">Version 8</h2>
+<p>Introduced in TileDB 2.2.3</p>
+<ul>
+<li><a href="../format_spec/fragment.html#data-file">Data files</a> are named by the name of their attribute or dimension, after percent encoding certain characters. These characters are <code>!#$%&amp;'()*+,/:;=?@[]</code>, as specified in <a href="https://tools.ietf.org/html/rfc3986">RFC 3986</a>, as well as <code>"&lt;&gt;\|</code>, which are not allowed in Windows file names.</li>
+</ul>
+</section>
+<section id="version-7" class="level2">
+<h2 class="anchored" data-anchor-id="version-7">Version 7</h2>
+<p>Introduced in TileDB 2.2</p>
+<ul>
+<li>Attributes can be nullable.
+<ul>
+<li>The <em>Nullable</em> and <em>Fill value validity</em> fields were added to <a href="../format_spec/array_schema.html#attribute">attributes</a>.</li>
+<li>The <em>Validity filters</em> field was added to <a href="../format_spec/array_schema.html#array-schema-file">array schemas</a>.</li>
+<li>Fragment metadata contain validity <a href="../format_spec/fragment.html#tile-offsets">tile offsets</a>.</li>
+</ul></li>
+</ul>
+</section>
+<section id="version-6" class="level2">
+<h2 class="anchored" data-anchor-id="version-6">Version 6</h2>
+<p>Introduced in TileDB 2.1</p>
+<ul>
+<li>The <em>Fill value</em> field was added to <a href="../format_spec/array_schema.html#attribute">attributes</a>.</li>
+</ul>
+</section>
+<section id="version-5" class="level2">
+<h2 class="anchored" data-anchor-id="version-5">Version 5</h2>
+<p>Introduced in TileDB 2.0</p>
+<ul>
+<li>Dimensions are stored in separate <a href="../format_spec/fragment.html#data-file">data files</a>.</li>
+<li>Sparse arrays can have string dimensions and dimensions with different datatypes.
+<ul>
+<li>The <em>Dimension datatype</em>, <em>Cell val num</em> and <em>Filters</em> fields were added to <a href="../format_spec/array_schema.html#dimension">dimensions</a>.</li>
+<li>The <em>Domain size</em> field was added to <a href="../format_spec/array_schema.html#dimension">dimensions</a>. The domain of a dimension can have a variable size.</li>
+<li>The <em>Domain datatype</em> field was removed from <a href="../format_spec/array_schema.html#domain">domains</a>.</li>
+<li>The <a href="../format_spec/fragment.html#mbr">MBR</a> structure has been updated to support variable-sized dimensions.</li>
+<li>The <em>Dimension number</em> and <em>R-Tree datatype</em> fields have been removed from <a href="../format_spec/fragment.html#r-tree">R-Trees</a>.</li>
+</ul></li>
+<li>The <em>Allows dups</em> field was added to <a href="../format_spec/array_schema.html#array-schema-file">array schemas</a>.</li>
+<li>Committed fragments are indicated by the presence of an <code>.ok</code> file in the array’s directory, with the same <a href="../format_spec/timestamped_name.html">timestamped name</a> as the fragment.</li>
+</ul>
+</section>
+<section id="version-4" class="level2">
+<h2 class="anchored" data-anchor-id="version-4">Version 4</h2>
+<p>Introduced in TileDB 1.7</p>
+<ul>
+<li>Support for the <a href="https://tiledb-inc-tiledb.readthedocs-hosted.com/en/1.6.3/tutorials/kv.html">key-value store</a> object type was removed. Key-value stores have been superseded by sparse arrays.</li>
+</ul>
+</section>
+<section id="version-3" class="level2">
+<h2 class="anchored" data-anchor-id="version-3">Version 3</h2>
+<p>Introduced in TileDB 1.6</p>
+<ul>
+<li>The structure of <a href="../format_spec/fragment.html#fragment-metadata-file">fragment metadata files</a> was overhauled.
+<ul>
+<li>The <a href="../format_spec/fragment.html#footer">footer</a> and <a href="../format_spec/fragment.html#r-tree">R-Tree</a> structures were added.</li>
+<li>The <em>Bounding coords</em> field was removed.</li>
+<li>The <em>MBRs</em> field was removed. MBRs are now stored in the R-Tree.</li>
+<li>Tile offsets and sizes are wrapped in their own generic tiles. This allows loading them lazily and in parallel.</li>
+</ul></li>
+</ul>
+</section>
+<section id="version-2" class="level2">
+<h2 class="anchored" data-anchor-id="version-2">Version 2</h2>
+<p>Introduced in TileDB 1.5</p>
+<ul>
+<li>Cell coordinate values of each dimension are always stored next to each other, regardless of whether they are filtered with a compression filter or not.</li>
+</ul>
+</section>
+<section id="version-1" class="level2">
+<h2 class="anchored" data-anchor-id="version-1">Version 1</h2>
+<p>Introduced in TileDB 1.4</p>
+<ul>
+<li>Initial version of the TileDB storage format.</li>
+</ul>
 
 
 </section>
