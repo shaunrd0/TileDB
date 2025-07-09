@@ -271,7 +271,7 @@ Status VFS::create_bucket(const URI& uri) const {
   }
   if (uri.is_azure()) {
 #ifdef HAVE_AZURE
-    azure().create_container(uri);
+    azure().create_bucket(uri);
     return Status::Ok();
 #else
     throw BuiltWithout("Azure");
@@ -298,7 +298,7 @@ Status VFS::remove_bucket(const URI& uri) const {
   }
   if (uri.is_azure()) {
 #ifdef HAVE_AZURE
-    azure().remove_container(uri);
+    azure().remove_bucket(uri);
     return Status::Ok();
 #else
     throw BuiltWithout("Azure");
@@ -326,7 +326,7 @@ Status VFS::empty_bucket(const URI& uri) const {
   }
   if (uri.is_azure()) {
 #ifdef HAVE_AZURE
-    azure().empty_container(uri);
+    azure().empty_bucket(uri);
     return Status::Ok();
 #else
     throw BuiltWithout("Azure");
@@ -441,14 +441,15 @@ Status VFS::remove_file(const URI& uri) const {
   }
   if (uri.is_s3()) {
 #ifdef HAVE_S3
-    return s3().remove_object(uri);
+    s3().remove_file(uri);
+    return Status::Ok();
 #else
     throw BuiltWithout("S3");
 #endif
   }
   if (uri.is_azure()) {
 #ifdef HAVE_AZURE
-    azure().remove_blob(uri);
+    azure().remove_file(uri);
     return Status::Ok();
 #else
     throw BuiltWithout("Azure");
@@ -522,7 +523,7 @@ uint64_t VFS::file_size(const URI& uri) const {
   }
   if (uri.is_azure()) {
 #ifdef HAVE_AZURE
-    return azure().blob_size(uri);
+    return azure().file_size(uri);
 #else
     throw BuiltWithout("Azure");
 #endif
@@ -552,7 +553,8 @@ Status VFS::is_dir(const URI& uri, bool* is_dir) const {
   }
   if (uri.is_s3()) {
 #ifdef HAVE_S3
-    return s3().is_dir(uri, is_dir);
+    *is_dir = s3().is_dir(uri);
+    return Status::Ok();
 #else
     *is_dir = false;
     throw BuiltWithout("S3");
@@ -595,7 +597,7 @@ Status VFS::is_file(const URI& uri, bool* is_file) const {
   }
   if (uri.is_s3()) {
 #ifdef HAVE_S3
-    RETURN_NOT_OK(s3().is_object(uri, is_file));
+    *is_file = s3().is_file(uri);
     return Status::Ok();
 #else
     *is_file = false;
@@ -604,7 +606,7 @@ Status VFS::is_file(const URI& uri, bool* is_file) const {
   }
   if (uri.is_azure()) {
 #ifdef HAVE_AZURE
-    *is_file = azure().is_blob(uri);
+    *is_file = azure().is_file(uri);
     return Status::Ok();
 #else
     *is_file = false;
@@ -760,7 +762,7 @@ Status VFS::move_file(const URI& old_uri, const URI& new_uri) {
   if (old_uri.is_azure()) {
     if (new_uri.is_azure())
 #ifdef HAVE_AZURE
-      azure().move_object(old_uri, new_uri);
+      azure().move_file(old_uri, new_uri);
     return Status::Ok();
 #else
       throw BuiltWithout("Azure");
@@ -1078,7 +1080,7 @@ Status VFS::read_impl(
   if (uri.is_azure()) {
 #ifdef HAVE_AZURE
     const auto read_fn = std::bind(
-        &Azure::read,
+        &Azure::read_impl,
         &azure(),
         std::placeholders::_1,
         std::placeholders::_2,
@@ -1304,7 +1306,7 @@ void VFS::flush(const URI& uri, bool finalize) {
   }
   if (uri.is_azure()) {
 #ifdef HAVE_AZURE
-    azure().flush_blob(uri);
+    azure().flush(uri, finalize);
     return;
 #else
     throw BuiltWithout("Azure");
@@ -1356,7 +1358,7 @@ Status VFS::write(
   }
   if (uri.is_azure()) {
 #ifdef HAVE_AZURE
-    azure().write(uri, buffer, buffer_size);
+    azure().write(uri, buffer, buffer_size, remote_global_order_write);
     return Status::Ok();
 #else
     throw BuiltWithout("Azure");
