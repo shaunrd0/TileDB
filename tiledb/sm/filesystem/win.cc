@@ -152,10 +152,6 @@ bool Win::supports_uri(const URI& uri) const {
 
 void Win::create_dir(const URI& uri) const {
   auto path = uri.to_path();
-  if (is_dir(uri)) {
-    throw WindowsException(
-        "Cannot create directory '" + path + "'; Directory already exists");
-  }
   std::error_code ec;
   std::filesystem::create_directories(path, ec);
   if (ec) {
